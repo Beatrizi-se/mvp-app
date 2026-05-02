@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/src/screens/home_page.dart';
 import 'package:mobile/src/screens/login_screen.dart';
-import 'package:mobile/src/screens/sing_up_screen.dart';
+import 'package:mobile/src/screens/sign_up_screen.dart';
 
 void main() {
   runApp(const MyApp());
