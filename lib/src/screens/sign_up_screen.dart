@@ -30,21 +30,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    'P',
-                    style: theme.textTheme.headlineLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF4A4A4A),
-                    ),
-                  ),
-                  const Icon(Icons.bakery_dining, color: Colors.orange, size: 40),
-                  Text(
-                    'TO',
-                    style: theme.textTheme.headlineLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF4A4A4A),
-                    ),
-                  ),
+                  Image.asset('assets/pato_logo.png', height: 150),
                 ],
               ),
               const SizedBox(height: 40),
