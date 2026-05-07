@@ -223,7 +223,7 @@ class _HomePageState extends State<HomePage> {
       height: 160,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: _recentTasks.length,
+        itemCount: 3,
         itemBuilder: (context, index) {
           final task = _recentTasks[index];
           return Padding(
