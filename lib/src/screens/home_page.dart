@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/task_model.dart';
 import '../service/recent_tasks_service.dart';
-import '../widgets/task_card.dart';
 import '../widgets/duck_tip_card.dart';
 import '../widgets/task_input_card.dart';
+import '../widgets/recent_tasks_section.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -16,36 +16,23 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
   final RecentTasksService _tasksService = RecentTasksService();
-  
-  List<TaskModel> _recentTasks = [];
-  bool _isLoading = true;
-  String? _errorMessage;
+  late Future<List<TaskModel>> _tasksFuture;
 
   @override
   void initState() {
     super.initState();
-    _fetchTasks();
+    _tasksFuture = _fetchTasks();
   }
 
-  Future<void> _fetchTasks() async {
-    try {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-      });
-      
-      final tasks = await _tasksService.getAllTasks();
-      
-      setState(() {
-        _recentTasks = tasks;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'Não foi possível carregar as tarefas.';
-      });
-    }
+  Future<List<TaskModel>> _fetchTasks() {
+    return _tasksService.getAllTasks('SEU_TOKEN_AQUI');
+  }
+
+  Future<void> _onRefresh() async {
+    setState(() {
+      _tasksFuture = _fetchTasks();
+    });
+    await _tasksFuture;
   }
 
   @override
@@ -68,7 +55,7 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: _fetchTasks,
+        onRefresh: _onRefresh,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(20.0),
@@ -152,7 +139,10 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
               const SizedBox(height: 12),
-              _buildRecentTasksSection(),
+              RecentTasksSection(
+                tasksFuture: _tasksFuture,
+                onRetry: _onRefresh,
+              ),
               const SizedBox(height: 32),
               const DuckTipCard(
                 tip: 'Foque em um passo de cada vez. Você está indo bem!',
@@ -184,60 +174,6 @@ class _HomePageState extends State<HomePage> {
             label: 'Favoritos',
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildRecentTasksSection() {
-    if (_isLoading) {
-      return const SizedBox(
-        height: 160,
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (_errorMessage != null) {
-      return SizedBox(
-        height: 160,
-        child: Center(
-          child: Text(
-            _errorMessage!,
-            style: GoogleFonts.poppins(color: Colors.redAccent),
-          ),
-        ),
-      );
-    }
-
-    if (_recentTasks.isEmpty) {
-      return Container(
-        height: 160,
-        alignment: Alignment.center,
-        child: Text(
-          'Nenhuma tarefa recente',
-          style: GoogleFonts.poppins(color: Colors.black26),
-        ),
-      );
-    }
-
-    return SizedBox(
-      height: 160,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: 3,
-        itemBuilder: (context, index) {
-          final task = _recentTasks[index];
-          return Padding(
-            padding: EdgeInsets.only(
-              right: index == _recentTasks.length - 1 ? 0 : 16.0,
-            ),
-            child: TaskCard(
-              title: task.title,
-              subtitle: task.subtitle,
-              progressText: task.progressText,
-              progress: task.progress,
-            ),
-          );
-        },
       ),
     );
   }
