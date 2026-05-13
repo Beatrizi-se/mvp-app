@@ -3,7 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'subtasks_button.dart';
 
 class TaskInputCard extends StatelessWidget {
-  const TaskInputCard({super.key});
+  final VoidCallback onAddTask;
+
+  const TaskInputCard({super.key, required this.onAddTask});
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +70,7 @@ class TaskInputCard extends StatelessWidget {
           SubtasksButton(
             text: 'Quebrar em passos',
             icon: Icons.chevron_right,
-            onPressed: () {},
+            onPressed: onAddTask,
           ),
         ],
       ),
