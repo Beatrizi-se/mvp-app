@@ -5,6 +5,7 @@ import '../service/recent_tasks_service.dart';
 import '../widgets/task_card.dart';
 import '../widgets/duck_tip_card.dart';
 import '../widgets/task_input_card.dart';
+import 'initial_screen_game.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -162,9 +163,20 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) => setState(() => _selectedIndex = index),
+        bottomNavigationBar: BottomNavigationBar(
+            currentIndex: _selectedIndex,
+            onTap: (index) {
+              setState(() => _selectedIndex = index);
+
+              if (index == 2) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const InitialScreenGame(),
+                  ),
+                );
+              }
+            },
         selectedItemColor: const Color(0xFF6C63FF),
         unselectedItemColor: Colors.black26,
         showUnselectedLabels: true,
@@ -178,6 +190,9 @@ class _HomePageState extends State<HomePage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.list_alt_rounded),
             label: 'Tarefas',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.videogame_asset_sharp),
+          label: 'Jogos',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.star_border_rounded),
