@@ -35,7 +35,7 @@ class _HomePageState extends State<HomePage> {
         _errorMessage = null;
       });
       
-      final tasks = await _tasksService.getAllTasks();
+      final tasks = await _tasksService.getAllTasks('');
       
       setState(() {
         _recentTasks = tasks;
@@ -168,7 +168,7 @@ class _HomePageState extends State<HomePage> {
             onTap: (index) {
               setState(() => _selectedIndex = index);
 
-              if (index == 2) {
+              if (index == 1) {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -187,13 +187,14 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(Icons.home_filled),
             label: 'Início',
           ),
+          BottomNavigationBarItem(icon: Icon(Icons.videogame_asset_sharp),
+            label: 'Jogos',
+          ),
           BottomNavigationBarItem(
             icon: Icon(Icons.list_alt_rounded),
             label: 'Tarefas',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.videogame_asset_sharp),
-          label: 'Jogos',
-          ),
+
           BottomNavigationBarItem(
             icon: Icon(Icons.star_border_rounded),
             label: 'Favoritos',
@@ -238,7 +239,7 @@ class _HomePageState extends State<HomePage> {
       height: 160,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: 3,
+        itemCount: _recentTasks.length > 3 ? 3 : _recentTasks.length,
         itemBuilder: (context, index) {
           final task = _recentTasks[index];
           return Padding(
