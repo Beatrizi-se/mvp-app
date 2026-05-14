@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import '../widgets/custom_text_field.dart';
-import '../widgets/primary_button.dart';
-import '../widgets/google_button.dart';
+import '../widgets/app_text_field.dart';
+import '../widgets/app_button.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -40,27 +39,25 @@ class LoginScreen extends StatelessWidget {
               ),
               const SizedBox(height: 32),
               // Campo de E-mail
-              const CustomTextField(
+              const AppTextField(
                 label: 'E-mail:',
                 hintText: 'seu@email.com',
                 suffixIcon: Icons.email_outlined,
+                keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 20),
               // Campo de Senha
-              const CustomTextField(
+              const AppTextField(
                 label: 'Senha:',
                 hintText: 'Sua senha',
                 isPassword: true,
-                suffixIcon: Icons.visibility_outlined,
               ),
               const SizedBox(height: 12),
               // Esqueci a senha
               Align(
                 alignment: Alignment.center,
                 child: TextButton(
-                  onPressed: () {
-                    // TODO: Navegar para recuperação de senha
-                  },
+                  onPressed: () {},
                   child: RichText(
                     text: TextSpan(
                       style: theme.textTheme.bodySmall?.copyWith(color: Colors.black54),
@@ -80,7 +77,7 @@ class LoginScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               // Botão Entrar
-              PrimaryButton(
+              AppButton(
                 text: 'Entrar',
                 onPressed: () {
                   Navigator.of(context).pushReplacementNamed('/home');
@@ -100,7 +97,10 @@ class LoginScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               // Botão Google
-              GoogleButton(
+              AppButton(
+                text: 'Entrar com Google',
+                type: AppButtonType.outlined,
+                leftIcon: const Icon(Icons.account_circle_outlined, color: Colors.red, size: 20),
                 onPressed: () {
                   // TODO: Lógica de login com Google
                 },

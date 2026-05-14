@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/task_model.dart';
 import '../service/recent_tasks_service.dart';
+import '../widgets/task_card.dart';
 import '../widgets/duck_tip_card.dart';
 import '../widgets/task_input_card.dart';
-import '../widgets/recent_tasks_section.dart';
+import 'task_form_page.dart';
+import 'initial_screen_game.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -16,23 +18,36 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
   final RecentTasksService _tasksService = RecentTasksService();
-  late Future<List<TaskModel>> _tasksFuture;
+  
+  List<TaskModel> _recentTasks = [];
+  bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _tasksFuture = _fetchTasks();
+    _fetchTasks();
   }
 
-  Future<List<TaskModel>> _fetchTasks() {
-    return _tasksService.getAllTasks('SEU_TOKEN_AQUI');
-  }
-
-  Future<void> _onRefresh() async {
-    setState(() {
-      _tasksFuture = _fetchTasks();
-    });
-    await _tasksFuture;
+  Future<void> _fetchTasks() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+      
+      final tasks = await _tasksService.getAllTasks('');
+      
+      setState(() {
+        _recentTasks = tasks;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Não foi possível carregar as tarefas.';
+      });
+    }
   }
 
   @override
@@ -55,7 +70,7 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: _onRefresh,
+        onRefresh: _fetchTasks,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(20.0),
@@ -109,7 +124,16 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      const TaskInputCard(),
+                      TaskInputCard(
+                        onAddTask: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const TaskFormPage(),
+                            ),
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ],
@@ -127,7 +151,9 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      // Sugestão: Navegar para uma tela que lista todas as tarefas
+                    },
                     child: Text(
                       'Ver todas >',
                       style: GoogleFonts.poppins(
@@ -139,10 +165,7 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
               const SizedBox(height: 12),
-              RecentTasksSection(
-                tasksFuture: _tasksFuture,
-                onRetry: _onRefresh,
-              ),
+              _buildRecentTasksSection(),
               const SizedBox(height: 32),
               const DuckTipCard(
                 tip: 'Foque em um passo de cada vez. Você está indo bem!',
@@ -154,7 +177,17 @@ class _HomePageState extends State<HomePage> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
-        onTap: (index) => setState(() => _selectedIndex = index),
+        onTap: (index) {
+          setState(() => _selectedIndex = index);
+          
+          if (index == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const InitialScreenGame()),
+            );
+          }
+          // Outras navegações podem ser adicionadas aqui para Tarefas (index 2) e Favoritos (index 3)
+        },
         selectedItemColor: const Color(0xFF6C63FF),
         unselectedItemColor: Colors.black26,
         showUnselectedLabels: true,
@@ -166,6 +199,10 @@ class _HomePageState extends State<HomePage> {
             label: 'Início',
           ),
           BottomNavigationBarItem(
+            icon: Icon(Icons.videogame_asset_outlined),
+            label: 'Jogos',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.list_alt_rounded),
             label: 'Tarefas',
           ),
@@ -174,6 +211,67 @@ class _HomePageState extends State<HomePage> {
             label: 'Favoritos',
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildRecentTasksSection() {
+    if (_isLoading) {
+      return const SizedBox(
+        height: 160,
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return SizedBox(
+        height: 160,
+        child: Center(
+          child: Text(
+            _errorMessage!,
+            style: GoogleFonts.poppins(color: Colors.redAccent),
+          ),
+        ),
+      );
+    }
+
+    if (_recentTasks.isEmpty) {
+      return Container(
+        height: 160,
+        alignment: Alignment.center,
+        child: Text(
+          'Nenhuma tarefa recente',
+          style: GoogleFonts.poppins(color: Colors.black26),
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: 160,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: _recentTasks.length > 3 ? 3 : _recentTasks.length,
+        itemBuilder: (context, index) {
+          final task = _recentTasks[index];
+          return Padding(
+            padding: EdgeInsets.only(
+              right: index == _recentTasks.length - 1 ? 0 : 16.0,
+            ),
+            child: TaskCard(
+              title: task.title,
+              subtitle: task.subtitle,
+              progressText: task.progressText,
+              progress: task.progress,
+              onTap: () {
+                // Navegar para detalhes da tarefa ou modo edição
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => TaskFormPage(task: task)),
+                );
+              },
+            ),
+          );
+        },
       ),
     );
   }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import '../widgets/custom_text_field.dart';
-import '../widgets/primary_button.dart';
-import '../widgets/google_button.dart';
+import '../widgets/app_text_field.dart';
+import '../widgets/app_button.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -47,25 +46,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
               const SizedBox(height: 32),
               // Campo de Nome
-              const CustomTextField(
+              const AppTextField(
                 label: 'Nome completo:',
                 hintText: 'Digite seu nome',
                 suffixIcon: Icons.person_outline,
               ),
               const SizedBox(height: 20),
               // Campo de E-mail
-              const CustomTextField(
+              const AppTextField(
                 label: 'E-mail:',
                 hintText: 'seu@email.com',
                 suffixIcon: Icons.email_outlined,
+                keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 20),
               // Campo de Senha
-              const CustomTextField(
+              const AppTextField(
                 label: 'Senha:',
                 hintText: 'Sua senha',
                 isPassword: true,
-                suffixIcon: Icons.visibility_outlined,
               ),
               const SizedBox(height: 16),
               // Termos de Serviço
@@ -115,8 +114,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ],
               ),
               const SizedBox(height: 32),
-              // Botão Cadastrar
-              PrimaryButton(
+              // Botão Cadastrar usando AppButton
+              AppButton(
                 text: 'Cadastrar',
                 onPressed: _acceptedTerms 
                     ? () {
@@ -142,8 +141,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              // Botão Google
-              GoogleButton(
+              // Botão Google usando AppButton
+              AppButton(
+                text: 'Entrar com Google',
+                type: AppButtonType.outlined,
+                leftIcon: const Icon(Icons.account_circle_outlined, color: Colors.red, size: 20),
                 onPressed: () {
                   // TODO: Lógica de cadastro com Google
                 },
