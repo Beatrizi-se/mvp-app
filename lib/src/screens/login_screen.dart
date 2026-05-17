@@ -1,13 +1,71 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../widgets/app_text_field.dart';
 import '../widgets/app_button.dart';
+import '../providers/auth_provider.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleLogin() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('E-mail ou senha não encontrados. Por favor, crie uma conta se ainda não tiver uma.'),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 5),
+        ),
+      );
+      return;
+    }
+
+    try {
+      await authProvider.login(email, password);
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed('/home');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro: Credenciais inválidas. Se você é novo por aqui, cadastre-se!'),
+            backgroundColor: Colors.redAccent,
+            action: SnackBarAction(
+              label: 'CADASTRAR',
+              textColor: Colors.white,
+              onPressed: () => Navigator.of(context).pushNamed('/signup'),
+            ),
+            duration: Duration(seconds: 6),
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final authProvider = Provider.of<AuthProvider>(context);
     
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FF),
@@ -22,7 +80,7 @@ class LoginScreen extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Image.asset('assets/pato_logo.png', height: 150),
+                  Image.asset('assets/pato_logo.png', height: 150, errorBuilder: (context, error, stackTrace) => const Icon(Icons.image_not_supported, size: 100)),
                 ],
               ),
               const SizedBox(height: 40),
@@ -39,18 +97,20 @@ class LoginScreen extends StatelessWidget {
               ),
               const SizedBox(height: 32),
               // Campo de E-mail
-              const AppTextField(
+              AppTextField(
                 label: 'E-mail:',
                 hintText: 'seu@email.com',
                 suffixIcon: Icons.email_outlined,
                 keyboardType: TextInputType.emailAddress,
+                controller: _emailController,
               ),
               const SizedBox(height: 20),
               // Campo de Senha
-              const AppTextField(
+              AppTextField(
                 label: 'Senha:',
                 hintText: 'Sua senha',
                 isPassword: true,
+                controller: _passwordController,
               ),
               const SizedBox(height: 12),
               // Esqueci a senha
@@ -77,12 +137,12 @@ class LoginScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               // Botão Entrar
-              AppButton(
-                text: 'Entrar',
-                onPressed: () {
-                  Navigator.of(context).pushReplacementNamed('/home');
-                },
-              ),
+              authProvider.isLoading
+                  ? const CircularProgressIndicator()
+                  : AppButton(
+                      text: 'Entrar',
+                      onPressed: _handleLogin,
+                    ),
               const SizedBox(height: 16),
               // Divisor "ou"
               const Row(

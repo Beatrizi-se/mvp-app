@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/task_model.dart';
-import '../widgets/task_step_item.dart';
+import '../service/task_service.dart';
 import '../widgets/task_form_header.dart';
 import '../widgets/task_form_selector_field.dart';
 import '../widgets/task_form_ai_section.dart';
@@ -21,13 +21,14 @@ class TaskFormPage extends StatefulWidget {
 class _TaskFormPageState extends State<TaskFormPage> {
   late bool isEditing;
   bool _useAI = true;
+  bool _isLoading = false;
   
+  final TaskService _taskService = TaskService();
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
 
-  final List<String> _steps = [];
+  final List<TaskStep> _steps = [];
 
-  // Variáveis de estado para os seletores
   String _selectedCategory = 'Selecionar';
   String _selectedPriority = 'Normal';
   DateTime? _selectedDate;
@@ -40,6 +41,16 @@ class _TaskFormPageState extends State<TaskFormPage> {
     if (isEditing) {
       _titleController.text = widget.task!.title;
       _descController.text = widget.task!.subtitle;
+      _selectedCategory = widget.task!.category;
+      _selectedPriority = widget.task!.priority;
+      _selectedDate = widget.task!.date;
+      if (widget.task!.time != null) {
+        final parts = widget.task!.time!.split(':');
+        if (parts.length == 2) {
+          _selectedTime = TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+        }
+      }
+      _steps.addAll(widget.task!.steps);
     }
   }
 
@@ -50,7 +61,6 @@ class _TaskFormPageState extends State<TaskFormPage> {
     super.dispose();
   }
 
-  // --- Lógica de Formatação ---
   String get _formattedDate => _selectedDate == null 
       ? 'Definir data' 
       : "${_selectedDate!.day.toString().padLeft(2, '0')}/${_selectedDate!.month.toString().padLeft(2, '0')}/${_selectedDate!.year}";
@@ -59,7 +69,6 @@ class _TaskFormPageState extends State<TaskFormPage> {
       ? 'Definir horário' 
       : "${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}";
 
-  // --- Lógica de Seleção ---
   Future<void> _pickDate() async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -147,7 +156,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
           TextButton(
             onPressed: () {
               if (controller.text.isNotEmpty) {
-                setState(() => _steps.add(controller.text));
+                setState(() => _steps.add(TaskStep(title: controller.text)));
               }
               Navigator.pop(context);
             },
@@ -156,6 +165,71 @@ class _TaskFormPageState extends State<TaskFormPage> {
         ],
       ),
     );
+  }
+
+  void _toggleStep(int index) {
+    setState(() {
+      final step = _steps[index];
+      _steps[index] = TaskStep(
+        title: step.title,
+        isCompleted: !step.isCompleted,
+      );
+    });
+  }
+
+  Future<void> _handleSave() async {
+    final title = _titleController.text.trim();
+    final subtitle = _descController.text.trim();
+
+    if (title.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, insira um título.')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final task = TaskModel(
+        id: widget.task?.id,
+        title: title,
+        subtitle: subtitle,
+        category: _selectedCategory,
+        priority: _selectedPriority,
+        date: _selectedDate,
+        time: _selectedTime != null ? '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}' : null,
+        steps: _steps,
+      );
+
+      final taskJson = task.toJson();
+      print('DEBUG: Tentando salvar tarefa. IsEditing: $isEditing');
+      print('DEBUG: JSON enviado: $taskJson');
+
+      if (isEditing) {
+        if (task.id == null) {
+          throw Exception('Erro interno: ID da tarefa não encontrado para edição.');
+        }
+        await _taskService.updateTask(task.id!, taskJson);
+      } else {
+        await _taskService.createTask(taskJson);
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tarefa salva com sucesso!')),
+        );
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao salvar tarefa: ${e.toString().replaceAll('Exception: ', '')}')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -237,7 +311,11 @@ class _TaskFormPageState extends State<TaskFormPage> {
               onToggleAI: (v) => setState(() => _useAI = v),
               onGenerateSteps: () {
                 setState(() {
-                  _steps.addAll(['Analisar requisitos', 'Esboçar design', 'Desenvolver protótipo']);
+                  _steps.addAll([
+                    TaskStep(title: 'Analisar requisitos'),
+                    TaskStep(title: 'Esboçar design'),
+                    TaskStep(title: 'Desenvolver protótipo'),
+                  ]);
                 });
               },
             ),
@@ -247,17 +325,18 @@ class _TaskFormPageState extends State<TaskFormPage> {
               steps: _steps,
               onAddStep: _showAddStepDialog,
               onDeleteStep: (index) => setState(() => _steps.removeAt(index)),
+              onToggleStep: _toggleStep,
             ),
 
             const SizedBox(height: 40),
-            AppButton(
-              text: isEditing ? 'Salvar alterações' : 'Salvar tarefa',
-              icon: Icons.check,
-              borderRadius: 16,
-              onPressed: () {
-                Navigator.pop(context);
-              },
-            ),
+            _isLoading 
+              ? const Center(child: CircularProgressIndicator())
+              : AppButton(
+                  text: isEditing ? 'Salvar alterações' : 'Salvar tarefa',
+                  icon: Icons.check,
+                  borderRadius: 16,
+                  onPressed: _handleSave,
+                ),
             const SizedBox(height: 20),
           ],
         ),
@@ -265,7 +344,6 @@ class _TaskFormPageState extends State<TaskFormPage> {
     );
   }
 
-  // --- Widgets de Apoio Locais (AppBar) ---
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       backgroundColor: Colors.transparent,
@@ -274,21 +352,41 @@ class _TaskFormPageState extends State<TaskFormPage> {
         icon: const Icon(Icons.arrow_back, color: Colors.black87),
         onPressed: () => Navigator.pop(context),
       ),
-      title: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text('P', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 24)),
-          Image.asset('assets/pato_logo.png', height: 30),
-          const Text('TO', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 24)),
-        ],
-      ),
+      title: Image.asset('assets/pato_logo.png', height: 60),
       centerTitle: true,
       actions: [
         if (isEditing)
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.black87),
-            onPressed: () {
-              // Implementar lógica de deletar
+            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+            onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Excluir Tarefa'),
+                  content: const Text('Tem certeza que deseja remover esta tarefa?'),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+                    TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Excluir', style: TextStyle(color: Colors.red))),
+                  ],
+                ),
+              );
+
+              if (confirm == true && mounted) {
+                setState(() => _isLoading = true);
+                try {
+                  await _taskService.deleteTask(widget.task!.id!);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tarefa removida!')));
+                    Navigator.pop(context, true);
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao excluir: $e')));
+                  }
+                } finally {
+                  if (mounted) setState(() => _isLoading = false);
+                }
+              }
             },
           ),
         const SizedBox(width: 8),

@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../models/task_model.dart';
 import 'task_step_item.dart';
 
 class TaskFormStepsList extends StatelessWidget {
-  final List<String> steps;
+  final List<TaskStep> steps;
   final VoidCallback onAddStep;
   final Function(int) onDeleteStep;
+  final Function(int)? onToggleStep;
 
   const TaskFormStepsList({
     super.key,
     required this.steps,
     required this.onAddStep,
     required this.onDeleteStep,
+    this.onToggleStep,
   });
 
   @override
@@ -48,7 +51,9 @@ class TaskFormStepsList extends StatelessWidget {
           )
         else
           ...steps.asMap().entries.map((entry) => TaskStepItem(
-                text: entry.value,
+                text: entry.value.title,
+                isCompleted: entry.value.isCompleted,
+                onToggle: onToggleStep != null ? () => onToggleStep!(entry.key) : null,
                 onDelete: () => onDeleteStep(entry.key),
               )),
         TextButton.icon(

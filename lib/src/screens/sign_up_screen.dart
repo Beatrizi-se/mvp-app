@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../widgets/app_text_field.dart';
 import '../widgets/app_button.dart';
+import '../providers/auth_provider.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -10,11 +12,62 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   bool _acceptedTerms = false;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleSignUp() async {
+    if (!_acceptedTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, aceite os termos de serviço.')),
+      );
+      return;
+    }
+
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (name.isEmpty || email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, preencha todos os campos.')),
+      );
+      return;
+    }
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    try {
+      await authProvider.register(name, email, password);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cadastro realizado com sucesso! Faça login para continuar.')),
+        );
+        // Retorna para a tela de login
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final authProvider = Provider.of<AuthProvider>(context);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FF),
@@ -29,7 +82,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Image.asset('assets/pato_logo.png', height: 150),
+                  Image.asset('assets/pato_logo.png', height: 150, errorBuilder: (context, error, stackTrace) => const Icon(Icons.image_not_supported, size: 100)),
                 ],
               ),
               const SizedBox(height: 40),
@@ -46,25 +99,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
               const SizedBox(height: 32),
               // Campo de Nome
-              const AppTextField(
+              AppTextField(
                 label: 'Nome completo:',
                 hintText: 'Digite seu nome',
                 suffixIcon: Icons.person_outline,
+                controller: _nameController,
               ),
               const SizedBox(height: 20),
               // Campo de E-mail
-              const AppTextField(
+              AppTextField(
                 label: 'E-mail:',
                 hintText: 'seu@email.com',
                 suffixIcon: Icons.email_outlined,
                 keyboardType: TextInputType.emailAddress,
+                controller: _emailController,
               ),
               const SizedBox(height: 20),
               // Campo de Senha
-              const AppTextField(
+              AppTextField(
                 label: 'Senha:',
                 hintText: 'Sua senha',
                 isPassword: true,
+                controller: _passwordController,
               ),
               const SizedBox(height: 16),
               // Termos de Serviço
@@ -114,20 +170,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ],
               ),
               const SizedBox(height: 32),
-              // Botão Cadastrar usando AppButton
-              AppButton(
-                text: 'Cadastrar',
-                onPressed: _acceptedTerms 
-                    ? () {
-                        // TODO: Lógica de cadastro
-                        Navigator.of(context).pushReplacementNamed('/home');
-                      }
-                    : () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Por favor, aceite os termos de serviço.')),
-                        );
-                      },
-              ),
+              // Botão Cadastrar
+              authProvider.isLoading
+                  ? const CircularProgressIndicator()
+                  : AppButton(
+                      text: 'Cadastrar',
+                      onPressed: _handleSignUp,
+                    ),
               const SizedBox(height: 16),
               // Divisor "ou"
               const Row(
@@ -141,7 +190,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              // Botão Google usando AppButton
+              // Botão Google
               AppButton(
                 text: 'Entrar com Google',
                 type: AppButtonType.outlined,
@@ -154,7 +203,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               // Link para login
               TextButton(
                 onPressed: () {
-                  Navigator.of(context).pushNamed('/');
+                  Navigator.of(context).pop();
                 },
                 child: RichText(
                   textAlign: TextAlign.center,

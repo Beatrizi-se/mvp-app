@@ -3,6 +3,9 @@ import '../widgets/difficulty_card.dart';
 import '../widgets/memory_info_card.dart';
 import '../widgets/duck_tip_card.dart';
 import '../widgets/memory_button.dart';
+import '../widgets/app_bottom_navigation.dart';
+import '../widgets/app_header.dart';
+import 'tasks_list_page.dart';
 
 class InitialScreenGame extends StatefulWidget {
   const InitialScreenGame({super.key});
@@ -12,6 +15,7 @@ class InitialScreenGame extends StatefulWidget {
 }
 
 class _InitialScreenGameState extends State<InitialScreenGame> {
+  final int _selectedIndex = 1;
   String dificuldadeSelecionada = 'Fácil';
 
   int get quantidadeCartas {
@@ -22,10 +26,37 @@ class _InitialScreenGameState extends State<InitialScreenGame> {
 
   int get quantidadePares => quantidadeCartas ~/ 2;
 
+  void _handleNavigation(int index) {
+    if (index == _selectedIndex) return;
+
+    switch (index) {
+      case 0:
+        Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+        break;
+
+      case 1:
+        break;
+
+      case 2:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const TasksListPage()),
+        );
+        break;
+
+      case 3:
+        // Tela favoritos
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFF),
+      appBar: AppHeader(
+        onLeadingPressed: () => Navigator.pop(context),
+      ),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -36,38 +67,11 @@ class _InitialScreenGameState extends State<InitialScreenGame> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // TOPO
-                    Row(
-                      children: [
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.arrow_back, size: 28, color: Color(0xFF07143F)),
-                        ),
-                        const Spacer(),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text('P', style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold, letterSpacing: 4, color: Color(0xFF07143F))),
-                            const SizedBox(width: 8),
-                            Image.asset('assets/pato_animado_image.png', height: 36, width: 36),
-                            const SizedBox(width: 8),
-                            const Text('TO', style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold, letterSpacing: 4, color: Color(0xFF07143F))),
-                          ],
-                        ),
-                        const Spacer(),
-                        IconButton(
-                          onPressed: () {},
-                          icon: const Icon(Icons.account_circle_outlined, size: 32, color: Color(0xFF56617A)),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-
                     // TÍTULO + IMAGEM
                     Row(
                       children: [
                         const Expanded(
-                          child: Text('Jogo da\nMemória', style: TextStyle(fontSize: 38, fontWeight: FontWeight.bold, color: Color(0xFF07143F), height: 1.1)),
+                          child: Text('Jogo da\nMemória', style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold, color: Color(0xFF07143F), height: 1.1)),
                         ),
                         Image.asset('assets/pato_cartas_image.png', height: 170, width: 170),
                       ],
@@ -103,17 +107,9 @@ class _InitialScreenGameState extends State<InitialScreenGame> {
                     const SizedBox(height: 24),
 
                     // CARD DE DICA UNIFICADO
-                    DuckTipCard(
-                      title: 'Dica do Pato 💜',
+                    const DuckTipCard(
                       tip: 'Respire fundo, foque e divirta-se!',
                       secondaryTip: 'Cada par encontrado fortalece seu cérebro! ✨',
-                      backgroundColor: const Color(0xFFFFF7E8),
-                      leading: Image.asset('assets/pato_muito_feliz_image.png', height: 45, width: 45),
-                      trailing: const CircleAvatar(
-                        radius: 19,
-                        backgroundColor: Color(0xFFF0EBFF),
-                        child: Icon(Icons.lightbulb_outline_rounded, color: Color(0xFF6C4DE6), size: 23),
-                      ),
                     ),
 
                     const SizedBox(height: 24),
@@ -125,6 +121,10 @@ class _InitialScreenGameState extends State<InitialScreenGame> {
             );
           },
         ),
+      ),
+      bottomNavigationBar: AppBottomNavigation(
+        currentIndex: _selectedIndex,
+        onTap: _handleNavigation,
       ),
     );
   }

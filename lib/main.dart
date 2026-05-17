@@ -1,12 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:mobile/src/screens/home_page.dart';
 import 'package:mobile/src/screens/login_screen.dart';
 import 'package:mobile/src/screens/sign_up_screen.dart';
 import 'package:mobile/src/screens/task_form_page.dart';
+import 'package:mobile/src/providers/auth_provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -28,7 +37,6 @@ class MyApp extends StatelessWidget {
         ),
         textTheme: GoogleFonts.poppinsTextTheme(),
       ),
-
       initialRoute: '/',
       routes: {
         '/': (context) => const LoginScreen(),

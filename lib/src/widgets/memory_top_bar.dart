@@ -23,34 +23,9 @@ class MemoryGameTopBar extends StatelessWidget {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'P',
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF07143F),
-              ),
-            ),
-
-            const SizedBox(width: 5),
-
-            Image.asset(
-              'assets/pato_animado_image.png',
-              height: 34,
-              width: 34,
-              fit: BoxFit.contain,
-            ),
-
-            const SizedBox(width: 5),
-
-            const Text(
-              'TO',
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF07143F),
-              ),
-            ),
+           Image.asset(
+            'assets/pato_logo.png',
+            height: 60,)
           ],
         ),
 

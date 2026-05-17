@@ -11,6 +11,14 @@ class TaskFormHeader extends StatelessWidget {
     return Stack(
       clipBehavior: Clip.none,
       children: [
+        Positioned(
+          right: -10,
+          top: -30,
+          child: Image.asset(
+            'assets/pato_muito_feliz_image.png',
+            width: 100,
+          ),
+        ),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -36,11 +44,6 @@ class TaskFormHeader extends StatelessWidget {
               ),
             ),
           ],
-        ),
-        Positioned(
-          right: -10,
-          top: -30,
-          child: Image.asset('assets/pato_muito_feliz_image.png', width: 100),
         ),
       ],
     );

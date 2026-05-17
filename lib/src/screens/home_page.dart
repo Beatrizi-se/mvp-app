@@ -1,25 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+
 import '../models/task_model.dart';
 import '../service/recent_tasks_service.dart';
+import '../providers/auth_provider.dart';
+
 import '../widgets/task_card.dart';
 import '../widgets/duck_tip_card.dart';
 import '../widgets/task_input_card.dart';
+import '../widgets/app_bottom_navigation.dart';
+import '../widgets/app_header.dart';
+
 import 'task_form_page.dart';
 import 'initial_screen_game.dart';
+import 'tasks_list_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
-  _HomePageState createState() => _HomePageState();
+  State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  int _selectedIndex = 0;
+  final int _selectedIndex = 0;
+
   final RecentTasksService _tasksService = RecentTasksService();
-  
+
   List<TaskModel> _recentTasks = [];
+
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -35,9 +45,9 @@ class _HomePageState extends State<HomePage> {
         _isLoading = true;
         _errorMessage = null;
       });
-      
-      final tasks = await _tasksService.getAllTasks('');
-      
+
+      final tasks = await _tasksService.getAllTasks();
+
       setState(() {
         _recentTasks = tasks;
         _isLoading = false;
@@ -50,24 +60,43 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  void _handleNavigation(int index) {
+    if (index == _selectedIndex) return;
+
+    switch (index) {
+      case 0:
+        // Já está no Início
+        break;
+
+      case 1:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const InitialScreenGame()),
+        );
+        break;
+
+      case 2:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const TasksListPage()),
+        );
+        break;
+
+      case 3:
+        // Tela favoritos
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FF),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: const Icon(Icons.menu, color: Colors.black87, size: 40,),
-        title: Image.asset('assets/pato_logo.png',
-          height: 60),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.account_circle_outlined, color: Colors.black87, size: 40,),
-            onPressed: () {},
-          ),
-          const SizedBox(width:16),
-        ],
+      appBar: AppHeader(
+        leading: IconButton(
+          icon: const Icon(Icons.menu, color: Colors.black87, size: 32),
+          onPressed: () {},
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: _fetchTasks,
@@ -94,33 +123,38 @@ class _HomePageState extends State<HomePage> {
                     children: [
                       Padding(
                         padding: const EdgeInsets.only(right: 100),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Bem vindo, usuário! 👋',
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                color: Colors.black54,
-                              ),
-                            ),
-                            RichText(
-                              text: TextSpan(
-                                style: GoogleFonts.poppins(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                                children: const [
-                                  TextSpan(text: 'Vamos simplificar\no seu '),
-                                  TextSpan(
-                                    text: 'dia?',
-                                    style: TextStyle(color: Color(0xFF6C63FF)),
+                        child: Consumer<AuthProvider>(
+                          builder: (context, authProvider, _) {
+                            final userName = authProvider.user?.nome ?? 'usuário';
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Bem vindo, $userName! 👋',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    color: Colors.black54,
                                   ),
-                                ],
-                              ),
-                            ),
-                          ],
+                                ),
+                                RichText(
+                                  text: TextSpan(
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
+                                    children: const [
+                                      TextSpan(text: 'Vamos simplificar\no seu '),
+                                      TextSpan(
+                                        text: 'dia?',
+                                        style: TextStyle(color: Color(0xFF6C63FF)),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -131,7 +165,7 @@ class _HomePageState extends State<HomePage> {
                             MaterialPageRoute(
                               builder: (context) => const TaskFormPage(),
                             ),
-                          );
+                          ).then((_) => _fetchTasks());
                         },
                       ),
                     ],
@@ -152,7 +186,10 @@ class _HomePageState extends State<HomePage> {
                   ),
                   TextButton(
                     onPressed: () {
-                      // Sugestão: Navegar para uma tela que lista todas as tarefas
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const TasksListPage()),
+                      );
                     },
                     child: Text(
                       'Ver todas >',
@@ -169,48 +206,16 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 32),
               const DuckTipCard(
                 tip: 'Foque em um passo de cada vez. Você está indo bem!',
+                secondaryTip: 'Pequenos passos levam a grandes conquistas! ✨',
               ),
               const SizedBox(height: 20),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: AppBottomNavigation(
         currentIndex: _selectedIndex,
-        onTap: (index) {
-          setState(() => _selectedIndex = index);
-          
-          if (index == 1) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const InitialScreenGame()),
-            );
-          }
-          // Outras navegações podem ser adicionadas aqui para Tarefas (index 2) e Favoritos (index 3)
-        },
-        selectedItemColor: const Color(0xFF6C63FF),
-        unselectedItemColor: Colors.black26,
-        showUnselectedLabels: true,
-        selectedLabelStyle: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500),
-        unselectedLabelStyle: GoogleFonts.poppins(fontSize: 12),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_filled),
-            label: 'Início',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.videogame_asset_outlined),
-            label: 'Jogos',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list_alt_rounded),
-            label: 'Tarefas',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.star_border_rounded),
-            label: 'Favoritos',
-          ),
-        ],
+        onTap: _handleNavigation,
       ),
     );
   }
@@ -239,37 +244,45 @@ class _HomePageState extends State<HomePage> {
       return Container(
         height: 160,
         alignment: Alignment.center,
-        child: Text(
-          'Nenhuma tarefa recente',
-          style: GoogleFonts.poppins(color: Colors.black26),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.assignment_outlined,
+              color: Colors.black12,
+              size: 40,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Nenhuma tarefa recente',
+              style: GoogleFonts.poppins(color: Colors.black26),
+            ),
+          ],
         ),
       );
     }
 
     return SizedBox(
       height: 160,
-      child: ListView.builder(
+      child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: _recentTasks.length > 3 ? 3 : _recentTasks.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 16),
         itemBuilder: (context, index) {
           final task = _recentTasks[index];
-          return Padding(
-            padding: EdgeInsets.only(
-              right: index == _recentTasks.length - 1 ? 0 : 16.0,
-            ),
-            child: TaskCard(
-              title: task.title,
-              subtitle: task.subtitle,
-              progressText: task.progressText,
-              progress: task.progress,
-              onTap: () {
-                // Navegar para detalhes da tarefa ou modo edição
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => TaskFormPage(task: task)),
-                );
-              },
-            ),
+          return TaskCard(
+            title: task.title,
+            subtitle: task.subtitle,
+            progressText: task.progressText,
+            progress: task.progress,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TaskFormPage(task: task),
+                ),
+              ).then((_) => _fetchTasks());
+            },
           );
         },
       ),

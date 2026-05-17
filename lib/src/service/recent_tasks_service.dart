@@ -1,22 +1,29 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import '../models/task_model.dart';
+import 'api_client.dart';
 
 class RecentTasksService {
-  // Substitua pela URL da sua API
-  final String _baseUrl = 'https://sua-api.com/v1';
+  final ApiClient _apiClient = ApiClient();
 
-  Future<List<TaskModel>> getAllTasks(String token) async {
+  // Rota de tarefas conforme a nova estrutura do servidor
+  static const String _tasksPath = '/tarefas';
+
+  Future<List<TaskModel>> getAllTasks() async {
     try {
-      final response = await http.get(Uri.parse('$_baseUrl/tasks'), headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token',});
+      final response = await _apiClient.get(_tasksPath);
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         return data.map((json) => TaskModel.fromJson(json)).toList();
+      } else if (response.statusCode == 401) {
+        throw Exception('Sessão expirada ou não autorizada. Por favor, faça login novamente.');
       } else {
         throw Exception('Falha ao carregar tarefas: ${response.statusCode}');
       }
     } catch (e) {
+      if (e.toString().contains('Connection refused')) {
+        throw Exception('Servidor offline. Verifique a conexão.');
+      }
       throw Exception('Erro ao buscar tarefas: $e');
     }
   }

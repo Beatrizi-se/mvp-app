@@ -1,33 +1,89 @@
-class TaskModel {
+class TaskStep {
   final String title;
-  final String subtitle;
-  final String progressText;
-  final double progress;
+  final bool isCompleted;
 
-  TaskModel({
+  TaskStep({
     required this.title,
-    required this.subtitle,
-    this.progressText = '',
-    this.progress = 0.0,
+    this.isCompleted = false,
   });
 
-  // Converte de JSON para Objeto
-  factory TaskModel.fromJson(Map<String, dynamic> json) {
-    return TaskModel(
+  factory TaskStep.fromJson(Map<String, dynamic> json) {
+    return TaskStep(
       title: json['title'] ?? '',
-      subtitle: json['subtitle'] ?? '',
-      progressText: json['progressText'] ?? '',
-      progress: (json['progress'] ?? 0.0).toDouble(),
+      isCompleted: json['isCompleted'] ?? false,
     );
   }
 
-  // Converte de Objeto para JSON
   Map<String, dynamic> toJson() {
     return {
       'title': title,
+      'isCompleted': isCompleted,
+    };
+  }
+}
+
+class TaskModel {
+  final String? id;
+  final String title;
+  final String subtitle;
+  final String category;
+  final String priority;
+  final DateTime? date;
+  final String? time;
+  final List<TaskStep> steps;
+
+  TaskModel({
+    this.id,
+    required this.title,
+    required this.subtitle,
+    this.category = 'Selecionar',
+    this.priority = 'Normal',
+    this.date,
+    this.time,
+    this.steps = const [],
+  });
+
+  // Calcula o progresso (0.0 a 1.0) baseado nos passos concluídos
+  double get progress {
+    if (steps.isEmpty) return 0.0;
+    final completedCount = steps.where((s) => s.isCompleted).length;
+    return completedCount / steps.length;
+  }
+
+  // Gera o texto de progresso (ex: "2/5 passos")
+  String get progressText {
+    if (steps.isEmpty) return 'Sem passos';
+    final completedCount = steps.where((s) => s.isCompleted).length;
+    return '$completedCount/${steps.length} passos';
+  }
+
+  factory TaskModel.fromJson(Map<String, dynamic> json) {
+    return TaskModel(
+      id: json['id']?.toString() ?? json['_id']?.toString(), // Suporte a 'id' ou '_id' (MongoDB)
+      title: json['title'] ?? '',
+      subtitle: json['subtitle'] ?? '',
+      category: json['category'] ?? 'Selecionar',
+      priority: json['priority'] ?? 'Normal',
+      date: json['date'] != null ? DateTime.tryParse(json['date']) : null,
+      time: json['time'],
+      steps: (json['steps'] as List? ?? [])
+          .map((step) => step is String 
+              ? TaskStep(title: step) // Suporte a lista de strings simples
+              : TaskStep.fromJson(step as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      if (id != null) 'id': id,
+      'title': title,
       'subtitle': subtitle,
-      'progressText': progressText,
-      'progress': progress,
+      'category': category,
+      'priority': priority,
+      'date': date?.toIso8601String(),
+      'time': time,
+      'steps': steps.map((s) => s.toJson()).toList(),
     };
   }
 }
