@@ -61,6 +61,8 @@ class TaskListCard extends StatelessWidget {
                     children: [
                       Text(
                         title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.poppins(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -69,6 +71,8 @@ class TaskListCard extends StatelessWidget {
                       ),
                       Text(
                         'Próximo passo: $nextStep',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.poppins(
                           fontSize: 11,
                           color: Colors.black54,
@@ -83,6 +87,8 @@ class TaskListCard extends StatelessWidget {
                         ),
                         child: Text(
                           category,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.poppins(
                             fontSize: 10,
                             color: const Color(0xFF6C63FF),

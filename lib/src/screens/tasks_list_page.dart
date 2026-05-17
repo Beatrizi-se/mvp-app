@@ -26,6 +26,7 @@ class _TasksListPageState extends State<TasksListPage> {
   final RecentTasksService _tasksService = RecentTasksService();
 
   List<TaskModel> _tasks = [];
+  List<TaskModel> _filteredTasks = [];
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -46,6 +47,7 @@ class _TasksListPageState extends State<TasksListPage> {
 
       setState(() {
         _tasks = tasks;
+        _applyFilter();
         _isLoading = false;
       });
     } catch (e) {
@@ -54,6 +56,20 @@ class _TasksListPageState extends State<TasksListPage> {
         _errorMessage = 'Erro ao carregar tarefas';
       });
     }
+  }
+
+  void _applyFilter() {
+    setState(() {
+      if (_selectedFilterIndex == 0) {
+        _filteredTasks = List.from(_tasks);
+      } else if (_selectedFilterIndex == 1) {
+        // Pendentes: progresso < 1.0 (ou se não tiver passos)
+        _filteredTasks = _tasks.where((task) => task.progress < 1.0).toList();
+      } else if (_selectedFilterIndex == 2) {
+        // Concluídas: progresso == 1.0
+        _filteredTasks = _tasks.where((task) => task.progress == 1.0).toList();
+      }
+    });
   }
 
   void _handleNavigation(int index) {
@@ -135,21 +151,24 @@ class _TasksListPageState extends State<TasksListPage> {
       clipBehavior: Clip.none,
       children: [
         Positioned(
-          right: -10,
+          right: -12,
           top: -10,
-          child: Image.asset('assets/pato_muito_feliz_image.png', height: 40),
+          child: Image.asset('assets/pato_muito_feliz_image.png', height: 126),
         ),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Text(
-                  'Minhas tarefas',
-                  style: GoogleFonts.poppins(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                Flexible(
+                  child: Text(
+                    'Minhas tarefas',
+                    style: GoogleFonts.poppins(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -157,7 +176,7 @@ class _TasksListPageState extends State<TasksListPage> {
               ],
             ),
             Text(
-              'Vamos por partes, um passo de cada vez.',
+              'Vamos por partes, \num passo de cada vez.',
               style: GoogleFonts.poppins(fontSize: 14, color: Colors.black54),
             ),
           ],
@@ -167,63 +186,67 @@ class _TasksListPageState extends State<TasksListPage> {
   }
 
   Widget _buildFilters() {
-    return Row(
-      children: List.generate(_filters.length, (index) {
-        final isSelected = _selectedFilterIndex == index;
-        return Padding(
-          padding: const EdgeInsets.only(right: 8.0),
-          child: GestureDetector(
-            onTap: () {
-              setState(() {
-                _selectedFilterIndex = index;
-              });
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFF6C63FF) : Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isSelected
-                      ? const Color(0xFF6C63FF)
-                      : const Color(0xFFE0E0E0),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: List.generate(_filters.length, (index) {
+          final isSelected = _selectedFilterIndex == index;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedFilterIndex = index;
+                });
+                _applyFilter();
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected ? const Color(0xFF6C63FF) : Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected
+                        ? const Color(0xFF6C63FF)
+                        : const Color(0xFFE0E0E0),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    if (index == 0)
+                      Icon(
+                        Icons.grid_view_rounded,
+                        size: 16,
+                        color: isSelected ? Colors.white : Colors.black54,
+                      ),
+                    if (index == 1)
+                      Icon(
+                        Icons.access_time_rounded,
+                        size: 16,
+                        color: isSelected ? Colors.white : Colors.black54,
+                      ),
+                    if (index == 2)
+                      Icon(
+                        Icons.check_circle_outline_rounded,
+                        size: 16,
+                        color: isSelected ? Colors.white : Colors.black54,
+                      ),
+                    const SizedBox(width: 4),
+                    Text(
+                      _filters[index],
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: isSelected ? Colors.white : Colors.black54,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              child: Row(
-                children: [
-                  if (index == 0)
-                    Icon(
-                      Icons.grid_view_rounded,
-                      size: 16,
-                      color: isSelected ? Colors.white : Colors.black54,
-                    ),
-                  if (index == 1)
-                    Icon(
-                      Icons.access_time_rounded,
-                      size: 16,
-                      color: isSelected ? Colors.white : Colors.black54,
-                    ),
-                  if (index == 2)
-                    Icon(
-                      Icons.check_circle_outline_rounded,
-                      size: 16,
-                      color: isSelected ? Colors.white : Colors.black54,
-                    ),
-                  const SizedBox(width: 4),
-                  Text(
-                    _filters[index],
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: isSelected ? Colors.white : Colors.black54,
-                    ),
-                  ),
-                ],
-              ),
             ),
-          ),
-        );
-      }),
+          );
+        }),
+      ),
     );
   }
 
@@ -279,12 +302,17 @@ class _TasksListPageState extends State<TasksListPage> {
       );
     }
 
-    if (_tasks.isEmpty) {
+    if (_filteredTasks.isEmpty) {
+      String message = 'Nenhuma tarefa encontrada';
+      if (_selectedFilterIndex == 1) message = 'Você não tem tarefas pendentes';
+      if (_selectedFilterIndex == 2) message = 'Você não tem tarefas concluídas';
+      
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
           child: Text(
-            'Nenhuma tarefa encontrada',
+            message,
+            textAlign: TextAlign.center,
             style: GoogleFonts.poppins(color: Colors.black38),
           ),
         ),
@@ -292,7 +320,7 @@ class _TasksListPageState extends State<TasksListPage> {
     }
 
     return Column(
-      children: _tasks.map((task) {
+      children: _filteredTasks.map((task) {
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
           child: TaskListCard(
