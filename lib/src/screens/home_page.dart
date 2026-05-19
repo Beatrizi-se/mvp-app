@@ -12,9 +12,12 @@ import '../widgets/task_input_card.dart';
 import '../widgets/app_bottom_navigation.dart';
 import '../widgets/app_header.dart';
 
+import '../widgets/side_drawer.dart';
+import '../providers/settings_provider.dart';
 import 'task_form_page.dart';
 import 'initial_screen_game.dart';
 import 'tasks_list_page.dart';
+import 'favorites_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -69,10 +72,7 @@ class _HomePageState extends State<HomePage> {
         break;
 
       case 1:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const InitialScreenGame()),
-        );
+        Navigator.pushNamed(context, '/games');
         break;
 
       case 2:
@@ -83,19 +83,24 @@ class _HomePageState extends State<HomePage> {
         break;
 
       case 3:
-        // Tela favoritos
+        Navigator.pushNamed(context, '/favorites');
         break;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final settingsProvider = Provider.of<SettingsProvider>(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FF),
+      drawer: const SideDrawer(),
       appBar: AppHeader(
-        leading: IconButton(
-          icon: const Icon(Icons.menu, color: Colors.black87, size: 32),
-          onPressed: () {},
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: Icon(Icons.menu, color: theme.colorScheme.onSurface, size: 32),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
         ),
       ),
       body: RefreshIndicator(
@@ -109,20 +114,21 @@ class _HomePageState extends State<HomePage> {
               Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  Positioned(
-                    right: -38,
-                    top: -25,
-                    child: Image.asset(
-                      'assets/pato_duvida_image.png',
-                      width: 200,
-                      fit: BoxFit.contain,
+                  if (!settingsProvider.focusMode)
+                    Positioned(
+                      right: -38,
+                      top: -25,
+                      child: Image.asset(
+                        'assets/pato_duvida_image.png',
+                        width: 200,
+                        fit: BoxFit.contain,
+                      ),
                     ),
-                  ),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.only(right: 100),
+                        padding: EdgeInsets.only(right: settingsProvider.focusMode ? 0 : 100),
                         child: Consumer<AuthProvider>(
                           builder: (context, authProvider, _) {
                             final userName = authProvider.user?.nome ?? 'usuário';
@@ -143,11 +149,11 @@ class _HomePageState extends State<HomePage> {
                                       fontWeight: FontWeight.bold,
                                       color: Colors.black87,
                                     ),
-                                    children: const [
-                                      TextSpan(text: 'Vamos simplificar\no seu '),
+                                    children: [
+                                      const TextSpan(text: 'Vamos simplificar\no seu '),
                                       TextSpan(
                                         text: 'dia?',
-                                        style: TextStyle(color: Color(0xFF6C63FF)),
+                                        style: TextStyle(color: theme.colorScheme.primary),
                                       ),
                                     ],
                                   ),
@@ -197,7 +203,7 @@ class _HomePageState extends State<HomePage> {
                       'Ver todas >',
                       style: GoogleFonts.poppins(
                         fontSize: 12,
-                        color: const Color(0xFF6C63FF),
+                        color: theme.colorScheme.primary,
                       ),
                     ),
                   ),
@@ -206,10 +212,11 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 12),
               _buildRecentTasksSection(),
               const SizedBox(height: 32),
-              const DuckTipCard(
-                tip: 'Foque em um passo de cada vez. Você está indo bem!',
-                secondaryTip: 'Pequenos passos levam a grandes conquistas! ✨',
-              ),
+              if (!settingsProvider.focusMode)
+                const DuckTipCard(
+                  tip: 'Foque em um passo de cada vez. Você está indo bem!',
+                  secondaryTip: 'Pequenos passos levam a grandes conquistas! ✨',
+                ),
               const SizedBox(height: 20),
             ],
           ),
@@ -277,6 +284,17 @@ class _HomePageState extends State<HomePage> {
             subtitle: task.subtitle,
             progressText: task.progressText,
             progress: task.progress,
+            isFavorite: task.isFavorite,
+            onFavoriteTap: () async {
+              try {
+                await _tasksService.toggleFavorite(task);
+                _fetchTasks();
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Erro ao favoritar: $e')),
+                );
+              }
+            },
             onTap: () {
               Navigator.push(
                 context,

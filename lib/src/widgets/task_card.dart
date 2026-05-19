@@ -5,7 +5,9 @@ class TaskCard extends StatelessWidget {
   final String subtitle;
   final String progressText;
   final double progress;
+  final bool isFavorite;
   final VoidCallback? onTap;
+  final VoidCallback? onFavoriteTap;
 
   const TaskCard({
     super.key,
@@ -13,7 +15,9 @@ class TaskCard extends StatelessWidget {
     required this.subtitle,
     required this.progressText,
     required this.progress,
+    this.isFavorite = false,
     this.onTap,
+    this.onFavoriteTap,
   });
 
   @override
@@ -44,15 +48,32 @@ class TaskCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                    color: Colors.black87,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                          color: Colors.black87,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (onFavoriteTap != null)
+                      GestureDetector(
+                        onTap: onFavoriteTap,
+                        child: Icon(
+                          isFavorite ? Icons.star_rounded : Icons.star_border_rounded,
+                          color: isFavorite ? Colors.amber : Colors.black26,
+                          size: 18,
+                        ),
+                      ),
+                  ],
                 ),
                 const Spacer(),
                 Center(

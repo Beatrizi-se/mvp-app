@@ -12,6 +12,8 @@ import '../widgets/app_header.dart';
 import 'task_form_page.dart';
 import 'initial_screen_game.dart';
 
+import 'favorites_page.dart';
+
 class TasksListPage extends StatefulWidget {
   const TasksListPage({super.key});
 
@@ -81,25 +83,23 @@ class _TasksListPageState extends State<TasksListPage> {
         break;
 
       case 1:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const InitialScreenGame()),
-        );
+        Navigator.pushReplacementNamed(context, '/games');
         break;
 
       case 2:
         break;
 
       case 3:
-        // Tela favoritos
+        Navigator.pushReplacementNamed(context, '/favorites');
         break;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FF),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppHeader(
         onLeadingPressed: () => Navigator.pop(context),
       ),
@@ -113,7 +113,7 @@ class _TasksListPageState extends State<TasksListPage> {
             children: [
               _buildHeader(),
               const SizedBox(height: 24),
-              _buildFilters(),
+              _buildFilters(context),
               const SizedBox(height: 24),
               _buildSearchBar(),
               const SizedBox(height: 24),
@@ -135,7 +135,7 @@ class _TasksListPageState extends State<TasksListPage> {
             MaterialPageRoute(builder: (context) => const TaskFormPage()),
           ).then((_) => _fetchTasks());
         },
-        backgroundColor: const Color(0xFF6C63FF),
+          backgroundColor: theme.colorScheme.primary,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: const Icon(Icons.add, color: Colors.white, size: 30),
       ),
@@ -185,7 +185,8 @@ class _TasksListPageState extends State<TasksListPage> {
     );
   }
 
-  Widget _buildFilters() {
+  Widget _buildFilters(BuildContext context) {
+    final theme = Theme.of(context);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
@@ -203,11 +204,11 @@ class _TasksListPageState extends State<TasksListPage> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF6C63FF) : Colors.white,
+                  color: isSelected ? theme.colorScheme.primary : Colors.white,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: isSelected
-                        ? const Color(0xFF6C63FF)
+                        ? theme.colorScheme.primary
                         : const Color(0xFFE0E0E0),
                   ),
                 ),
@@ -274,7 +275,7 @@ class _TasksListPageState extends State<TasksListPage> {
               ),
             ),
           ),
-          const Icon(Icons.tune_rounded, color: Color(0xFF6C63FF)),
+          const Icon(Icons.tune_rounded, color: Colors.black45),
         ],
       ),
     );
@@ -330,6 +331,17 @@ class _TasksListPageState extends State<TasksListPage> {
             progressText: task.progressText,
             progress: task.progress,
             icon: Icons.task_alt_rounded,
+            isFavorite: task.isFavorite,
+            onFavoriteTap: () async {
+              try {
+                await _tasksService.toggleFavorite(task);
+                _fetchTasks();
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Erro ao favoritar: $e')),
+                );
+              }
+            },
             onTap: () {
               Navigator.push(
                 context,

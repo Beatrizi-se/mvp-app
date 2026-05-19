@@ -27,4 +27,20 @@ class RecentTasksService {
       throw Exception('Erro ao buscar tarefas: $e');
     }
   }
+
+  Future<void> toggleFavorite(TaskModel task) async {
+    try {
+      final updatedTask = task.copyWith(isFavorite: !task.isFavorite);
+      final response = await _apiClient.patch(
+        '$_tasksPath/${task.id}',
+        body: updatedTask.toJson(),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Erro ao atualizar favorito');
+      }
+    } catch (e) {
+      throw Exception('Erro ao favoritar tarefa: $e');
+    }
+  }
 }

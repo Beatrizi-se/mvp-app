@@ -35,7 +35,8 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
               size: 40,
             ),
             onPressed: () {
-              // Navegar para perfil
+              // Garante que o ícone de perfil leve sempre para a tela de perfil
+              Navigator.pushNamed(context, '/profile');
             },
           ),
         const SizedBox(width: 8),

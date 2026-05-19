@@ -8,7 +8,9 @@ class TaskListCard extends StatelessWidget {
   final String progressText;
   final double progress;
   final IconData icon;
+  final bool isFavorite;
   final VoidCallback? onTap;
+  final VoidCallback? onFavoriteTap;
 
   const TaskListCard({
     super.key,
@@ -18,11 +20,14 @@ class TaskListCard extends StatelessWidget {
     required this.progressText,
     required this.progress,
     required this.icon,
+    this.isFavorite = false,
     this.onTap,
+    this.onFavoriteTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -49,10 +54,10 @@ class TaskListCard extends StatelessWidget {
                   width: 50,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF0EFFF),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(icon, color: const Color(0xFF6C63FF)),
+                  child: Icon(icon, color: theme.colorScheme.primary),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -82,7 +87,7 @@ class TaskListCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE8E6FF).withOpacity(0.5),
+                          color: theme.colorScheme.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -91,7 +96,7 @@ class TaskListCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.poppins(
                             fontSize: 10,
-                            color: const Color(0xFF6C63FF),
+                            color: theme.colorScheme.primary,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -107,7 +112,7 @@ class TaskListCard extends StatelessWidget {
                       style: GoogleFonts.poppins(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
-                        color: const Color(0xFF6C63FF),
+                        color: theme.colorScheme.primary,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -117,14 +122,26 @@ class TaskListCard extends StatelessWidget {
                       child: CircularProgressIndicator(
                         value: progress,
                         strokeWidth: 3,
-                        backgroundColor: const Color(0xFFF0EFFF),
-                        valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF6C63FF)),
+                        backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                        valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(width: 8),
-                const Icon(Icons.chevron_right, color: Colors.black26),
+                const SizedBox(width: 12),
+                if (onFavoriteTap != null)
+                  IconButton(
+                    icon: Icon(
+                      isFavorite ? Icons.star_rounded : Icons.star_border_rounded,
+                      color: isFavorite ? Colors.amber : Colors.black26,
+                      size: 24,
+                    ),
+                    onPressed: onFavoriteTap,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  )
+                else
+                  const Icon(Icons.chevron_right, color: Colors.black26),
               ],
             ),
           ),

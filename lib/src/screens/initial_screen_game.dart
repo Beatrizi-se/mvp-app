@@ -38,22 +38,20 @@ class _InitialScreenGameState extends State<InitialScreenGame> {
         break;
 
       case 2:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const TasksListPage()),
-        );
+        Navigator.pushReplacementNamed(context, '/tasks-list');
         break;
 
       case 3:
-        // Tela favoritos
+        Navigator.pushReplacementNamed(context, '/favorites');
         break;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFF),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppHeader(
         onLeadingPressed: () => Navigator.pop(context),
       ),

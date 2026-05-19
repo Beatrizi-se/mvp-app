@@ -37,8 +37,10 @@ class _TaskFormPageState extends State<TaskFormPage> {
   @override
   void initState() {
     super.initState();
-    isEditing = widget.task != null;
-    if (isEditing) {
+    // Só é edição se tivermos uma tarefa E essa tarefa tiver um ID (do banco)
+    isEditing = widget.task != null && widget.task!.id != null;
+    
+    if (widget.task != null) {
       _titleController.text = widget.task!.title;
       _descController.text = widget.task!.subtitle;
       _selectedCategory = widget.task!.category;
@@ -369,7 +371,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
             _isLoading 
               ? const Center(child: CircularProgressIndicator())
               : AppButton(
-                  text: isEditing ? 'Salvar alterações' : 'Salvar tarefa',
+                  text: isEditing ? 'Salvar alterações' : 'Criar tarefa',
                   icon: Icons.check,
                   borderRadius: 16,
                   onPressed: _handleSave,

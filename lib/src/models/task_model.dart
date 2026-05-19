@@ -31,6 +31,7 @@ class TaskModel {
   final DateTime? date;
   final String? time;
   final List<TaskStep> steps;
+  final bool isFavorite;
 
   TaskModel({
     this.id,
@@ -41,6 +42,7 @@ class TaskModel {
     this.date,
     this.time,
     this.steps = const [],
+    this.isFavorite = false,
   });
 
   // Calcula o progresso (0.0 a 1.0) baseado nos passos concluídos
@@ -71,6 +73,7 @@ class TaskModel {
               ? TaskStep(title: step) // Suporte a lista de strings simples
               : TaskStep.fromJson(step as Map<String, dynamic>))
           .toList(),
+      isFavorite: json['isFavorite'] ?? false,
     );
   }
 
@@ -84,6 +87,31 @@ class TaskModel {
       'date': date?.toIso8601String(),
       'time': time,
       'steps': steps.map((s) => s.toJson()).toList(),
+      'isFavorite': isFavorite,
     };
+  }
+
+  TaskModel copyWith({
+    String? id,
+    String? title,
+    String? subtitle,
+    String? category,
+    String? priority,
+    DateTime? date,
+    String? time,
+    List<TaskStep>? steps,
+    bool? isFavorite,
+  }) {
+    return TaskModel(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      subtitle: subtitle ?? this.subtitle,
+      category: category ?? this.category,
+      priority: priority ?? this.priority,
+      date: date ?? this.date,
+      time: time ?? this.time,
+      steps: steps ?? this.steps,
+      isFavorite: isFavorite ?? this.isFavorite,
+    );
   }
 }

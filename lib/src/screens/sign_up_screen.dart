@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../widgets/app_text_field.dart';
@@ -144,26 +145,31 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _acceptedTerms = !_acceptedTerms;
-                        });
-                      },
-                      child: RichText(
-                        text: TextSpan(
-                          style: theme.textTheme.bodySmall?.copyWith(color: Colors.black87),
-                          children: [
-                            const TextSpan(text: 'Eu aceito os '),
-                            TextSpan(
-                              text: 'termos de serviço',
-                              style: TextStyle(
-                                color: theme.colorScheme.primary,
-                                fontWeight: FontWeight.bold,
-                              ),
+                    child: RichText(
+                      text: TextSpan(
+                        style: theme.textTheme.bodySmall?.copyWith(color: Colors.black87),
+                        children: [
+                          TextSpan(
+                            text: 'Eu aceito os ',
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                setState(() {
+                                  _acceptedTerms = !_acceptedTerms;
+                                });
+                              },
+                          ),
+                          TextSpan(
+                            text: 'termos de serviço',
+                            style: TextStyle(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.bold,
                             ),
-                          ],
-                        ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                Navigator.pushNamed(context, '/terms');
+                              },
+                          ),
+                        ],
                       ),
                     ),
                   ),

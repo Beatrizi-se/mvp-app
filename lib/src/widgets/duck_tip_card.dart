@@ -21,6 +21,7 @@ class DuckTipCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -66,7 +67,7 @@ class DuckTipCard extends StatelessWidget {
                     secondaryTip!,
                     style: GoogleFonts.poppins(
                       fontSize: 11,
-                      color: const Color(0xFF6C63FF),
+                      color: theme.colorScheme.primary,
                       height: 1.3,
                       fontWeight: FontWeight.w600,
                     ),
@@ -76,12 +77,12 @@ class DuckTipCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          trailing ?? const CircleAvatar(
+          trailing ?? CircleAvatar(
             radius: 18,
-            backgroundColor: Color(0xFFF0EBFF),
+            backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
             child: Icon(
               Icons.lightbulb_outline_rounded,
-              color: Color(0xFF6C63FF),
+              color: theme.colorScheme.primary,
               size: 20,
             ),
           ),
