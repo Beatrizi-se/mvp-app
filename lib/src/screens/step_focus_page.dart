@@ -1,8 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/task_model.dart';
-import '../widgets/app_header.dart';
-import '../widgets/app_button.dart';
 
 class StepFocusPage extends StatefulWidget {
   final TaskModel task;
@@ -19,6 +18,9 @@ class StepFocusPage extends StatefulWidget {
 }
 
 class _StepFocusPageState extends State<StepFocusPage> {
+  Timer? _timer;
+  int _secondsRemaining = 25 * 60;
+  bool _isRunning = false;
   late bool _isCompleted;
 
   @override
@@ -28,122 +30,268 @@ class _StepFocusPageState extends State<StepFocusPage> {
   }
 
   @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _toggleTimer() {
+    if (_isRunning) {
+      _timer?.cancel();
+    } else {
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        setState(() {
+          if (_secondsRemaining > 0) {
+            _secondsRemaining--;
+          } else {
+            _timer?.cancel();
+            _isRunning = false;
+            _handleFinish();
+          }
+        });
+      });
+    }
+    setState(() {
+      _isRunning = !_isRunning;
+    });
+  }
+
+  void _resetTimer() {
+    _timer?.cancel();
+    setState(() {
+      _secondsRemaining = 25 * 60;
+      _isRunning = false;
+    });
+  }
+
+  void _handleFinish() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text('Tempo esgotado! ✨', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+        content: Text('Você completou sua sessão de foco. Deseja marcar este passo como concluído?', style: GoogleFonts.poppins()),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Ainda não', style: GoogleFonts.poppins(color: Colors.black45)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _completeStep();
+            },
+            child: Text('Sim, concluir!', style: GoogleFonts.poppins(color: const Color(0xFF6C5CE7), fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _completeStep() {
+    setState(() {
+      _isCompleted = true;
+    });
+    Navigator.pop(context, true);
+  }
+
+  String _formatTime(int seconds) {
+    int minutes = seconds ~/ 60;
+    int remainingSeconds = seconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final primaryColor = theme.colorScheme.primary;
     final step = widget.task.steps[widget.stepIndex];
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppHeader(
-        onLeadingPressed: () => Navigator.pop(context),
+      backgroundColor: const Color(0xFFF7F8FF),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF07143F)),
+          onPressed: () => Navigator.pop(context, true),
+        ),
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 40),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.psychology_outlined,
-                  size: 80,
-                  color: theme.colorScheme.primary,
-                ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        child: Column(
+          children: [
+            const SizedBox(height: 10),
+            // Card Principal do Timer
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(32),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
               ),
-              const SizedBox(height: 32),
-              Text(
-                'Passo ${widget.stepIndex + 1}',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.primary,
-                ),
+              child: Column(
+                children: [
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SizedBox(
+                        width: 220,
+                        height: 220,
+                        child: CircularProgressIndicator(
+                          value: _secondsRemaining / (25 * 60),
+                          strokeWidth: 10,
+                          backgroundColor: primaryColor.withValues(alpha: 0.05),
+                          valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                          strokeCap: StrokeCap.round,
+                        ),
+                      ),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _formatTime(_secondsRemaining),
+                            style: GoogleFonts.poppins(
+                              fontSize: 56,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF07143F),
+                            ),
+                          ),
+                          Text(
+                            'Tempo de foco',
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              color: Colors.black45,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 40),
+                  // Botão Iniciar/Pausar
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: _toggleTimer,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(_isRunning ? Icons.pause : Icons.play_arrow),
+                          const SizedBox(width: 8),
+                          Text(
+                            _isRunning ? 'Pausar foco' : 'Iniciar foco',
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Botão Reiniciar
+                  TextButton.icon(
+                    onPressed: _resetTimer,
+                    icon: const Icon(Icons.refresh, size: 18, color: Colors.black26),
+                    label: Text(
+                      'Reiniciar',
+                      style: GoogleFonts.poppins(
+                        color: Colors.black26,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                step.title,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
+            ),
+            const SizedBox(height: 24),
+            // Info do Passo
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
               ),
-              const SizedBox(height: 16),
-              if (step.duration != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Passo atual',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black45,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    step.title,
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF07143F),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+            // Botão de Tarefa Concluída
+            if (!_isCompleted)
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: _completeStep,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: primaryColor,
+                    side: BorderSide(color: primaryColor, width: 2),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 0,
                   ),
                   child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.access_time, size: 16, color: Colors.black54),
-                      const SizedBox(width: 4),
+                      const Icon(Icons.check_circle_outline),
+                      const SizedBox(width: 8),
                       Text(
-                        'Aprox. ${step.duration}',
-                        style: GoogleFonts.poppins(fontSize: 12, color: Colors.black54),
+                        'Tarefa concluída',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
                 ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      'Foque apenas neste passo agora.',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    AppButton(
-                      text: _isCompleted ? 'Concluído! ✨' : 'Marcar como concluído',
-                      onPressed: () {
-                        setState(() {
-                          _isCompleted = true;
-                        });
-                        // Aqui você chamaria o serviço para atualizar o status
-                        if (!mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Passo concluído com sucesso!')),
-                        );
-                        Future.delayed(const Duration(seconds: 1), () {
-                          if (!context.mounted) return;
-                          Navigator.pop(context, true);
-                        });
-                      },
-                      type: _isCompleted ? AppButtonType.primary : AppButtonType.primary,
-                    ),
-                  ],
-                ),
               ),
-              const SizedBox(height: 24),
-            ],
-          ),
+            const SizedBox(height: 40),
+          ],
         ),
       ),
     );

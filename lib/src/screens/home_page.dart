@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../models/task_model.dart';
 import '../service/recent_tasks_service.dart';
 import '../providers/auth_provider.dart';
+import '../providers/task_provider.dart';
 
 import '../widgets/task_card.dart';
 import '../widgets/duck_tip_card.dart';
@@ -28,38 +29,17 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final int _selectedIndex = 0;
 
-  final RecentTasksService _tasksService = RecentTasksService();
-
-  List<TaskModel> _recentTasks = [];
-
-  bool _isLoading = true;
-  String? _errorMessage;
-
   @override
   void initState() {
     super.initState();
-    _fetchTasks();
+    // Inicia a busca global das tarefas
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<TaskProvider>().fetchTasks();
+    });
   }
 
   Future<void> _fetchTasks() async {
-    try {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-      });
-
-      final tasks = await _tasksService.getAllTasks();
-
-      setState(() {
-        _recentTasks = tasks;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'Não foi possível carregar as tarefas.';
-      });
-    }
+    return context.read<TaskProvider>().fetchTasks();
   }
 
   void _handleNavigation(int index) {
@@ -78,7 +58,7 @@ class _HomePageState extends State<HomePage> {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const TasksListPage()),
-        );
+        ).then((_) => _fetchTasks());
         break;
 
       case 3:
@@ -196,7 +176,7 @@ class _HomePageState extends State<HomePage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const TasksListPage()),
-                      );
+                      ).then((_) => _fetchTasks());
                     },
                     child: Text(
                       'Ver todas >',
@@ -229,26 +209,31 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildRecentTasksSection() {
-    if (_isLoading) {
+    final taskProvider = Provider.of<TaskProvider>(context);
+    final isLoading = taskProvider.isLoading;
+    final errorMessage = taskProvider.errorMessage;
+    final recentTasks = taskProvider.recentTasks;
+
+    if (isLoading) {
       return const SizedBox(
         height: 160,
         child: Center(child: CircularProgressIndicator()),
       );
     }
 
-    if (_errorMessage != null) {
+    if (errorMessage != null) {
       return SizedBox(
         height: 160,
         child: Center(
           child: Text(
-            _errorMessage!,
+            errorMessage,
             style: GoogleFonts.poppins(color: Colors.redAccent),
           ),
         ),
       );
     }
 
-    if (_recentTasks.isEmpty) {
+    if (recentTasks.isEmpty) {
       return Container(
         height: 160,
         alignment: Alignment.center,
@@ -274,10 +259,10 @@ class _HomePageState extends State<HomePage> {
       height: 160,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: _recentTasks.length > 3 ? 3 : _recentTasks.length,
+        itemCount: recentTasks.length,
         separatorBuilder: (context, index) => const SizedBox(width: 16),
         itemBuilder: (context, index) {
-          final task = _recentTasks[index];
+          final task = recentTasks[index];
           return TaskCard(
             title: task.title,
             subtitle: task.subtitle,
@@ -286,9 +271,7 @@ class _HomePageState extends State<HomePage> {
             isFavorite: task.isFavorite,
             onFavoriteTap: () async {
               try {
-                await _tasksService.toggleFavorite(task);
-                if (!mounted) return;
-                _fetchTasks();
+                await taskProvider.toggleFavorite(task);
               } catch (e) {
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -302,7 +285,7 @@ class _HomePageState extends State<HomePage> {
                 MaterialPageRoute(
                   builder: (context) => TaskOverviewPage(task: task),
                 ),
-              ).then((_) => _fetchTasks());
+              );
             },
           );
         },

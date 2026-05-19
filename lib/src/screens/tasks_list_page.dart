@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:provider/provider.dart';
 import '../models/task_model.dart';
+import '../providers/task_provider.dart';
 import '../service/recent_tasks_service.dart';
-
 import '../widgets/task_list_card.dart';
 import '../widgets/duck_tip_card.dart';
 import '../widgets/app_bottom_navigation.dart';
@@ -25,53 +26,29 @@ class _TasksListPageState extends State<TasksListPage> {
   final int _selectedIndex = 2;
   int _selectedFilterIndex = 0;
   final List<String> _filters = ['Todas', 'Pendentes', 'Concluídas'];
-  final RecentTasksService _tasksService = RecentTasksService();
-
-  List<TaskModel> _tasks = [];
-  List<TaskModel> _filteredTasks = [];
-  bool _isLoading = true;
-  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _fetchTasks();
+    // Garante que os dados estejam frescos
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<TaskProvider>().fetchTasks();
+    });
   }
 
   Future<void> _fetchTasks() async {
-    try {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-      });
-
-      final tasks = await _tasksService.getAllTasks();
-
-      setState(() {
-        _tasks = tasks;
-        _applyFilter();
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'Erro ao carregar tarefas';
-      });
-    }
+    return context.read<TaskProvider>().fetchTasks();
   }
 
-  void _applyFilter() {
-    setState(() {
-      if (_selectedFilterIndex == 0) {
-        _filteredTasks = List.from(_tasks);
-      } else if (_selectedFilterIndex == 1) {
-        // Pendentes: progresso < 1.0 (ou se não tiver passos)
-        _filteredTasks = _tasks.where((task) => task.progress < 1.0).toList();
-      } else if (_selectedFilterIndex == 2) {
-        // Concluídas: progresso == 1.0
-        _filteredTasks = _tasks.where((task) => task.progress == 1.0).toList();
-      }
-    });
+  List<TaskModel> _getFilteredTasks(List<TaskModel> allTasks) {
+    if (_selectedFilterIndex == 0) {
+      return allTasks;
+    } else if (_selectedFilterIndex == 1) {
+      return allTasks.where((task) => task.progress < 1.0).toList();
+    } else if (_selectedFilterIndex == 2) {
+      return allTasks.where((task) => task.progress == 1.0).toList();
+    }
+    return allTasks;
   }
 
   void _handleNavigation(int index) {
@@ -79,7 +56,7 @@ class _TasksListPageState extends State<TasksListPage> {
 
     switch (index) {
       case 0:
-        Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+        Navigator.pop(context, true);
         break;
 
       case 1:
@@ -199,7 +176,6 @@ class _TasksListPageState extends State<TasksListPage> {
                 setState(() {
                   _selectedFilterIndex = index;
                 });
-                _applyFilter();
               },
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -282,7 +258,12 @@ class _TasksListPageState extends State<TasksListPage> {
   }
 
   Widget _buildTasksListSection() {
-    if (_isLoading) {
+    final taskProvider = Provider.of<TaskProvider>(context);
+    final isLoading = taskProvider.isLoading;
+    final errorMessage = taskProvider.errorMessage;
+    final filteredTasks = _getFilteredTasks(taskProvider.tasks);
+
+    if (isLoading) {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(32),
@@ -291,19 +272,19 @@ class _TasksListPageState extends State<TasksListPage> {
       );
     }
 
-    if (_errorMessage != null) {
+    if (errorMessage != null) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
           child: Text(
-            _errorMessage!,
+            errorMessage,
             style: GoogleFonts.poppins(color: Colors.redAccent),
           ),
         ),
       );
     }
 
-    if (_filteredTasks.isEmpty) {
+    if (filteredTasks.isEmpty) {
       String message = 'Nenhuma tarefa encontrada';
       if (_selectedFilterIndex == 1) message = 'Você não tem tarefas pendentes';
       if (_selectedFilterIndex == 2) message = 'Você não tem tarefas concluídas';
@@ -321,7 +302,7 @@ class _TasksListPageState extends State<TasksListPage> {
     }
 
     return Column(
-      children: _filteredTasks.map((task) {
+      children: filteredTasks.map((task) {
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
           child: TaskListCard(
@@ -334,9 +315,7 @@ class _TasksListPageState extends State<TasksListPage> {
             isFavorite: task.isFavorite,
             onFavoriteTap: () async {
               try {
-                await _tasksService.toggleFavorite(task);
-                if (!mounted) return;
-                _fetchTasks();
+                await taskProvider.toggleFavorite(task);
               } catch (e) {
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -348,7 +327,7 @@ class _TasksListPageState extends State<TasksListPage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => TaskOverviewPage(task: task)),
-              ).then((_) => _fetchTasks());
+              );
             },
           ),
         );

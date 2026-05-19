@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../models/task_model.dart';
 import '../models/task_step_model.dart';
+import '../providers/task_provider.dart';
+import '../service/recent_tasks_service.dart';
+import '../service/task_service.dart';
 import '../widgets/app_header.dart';
 import '../widgets/task_overview/task_overview_badge.dart';
 import '../widgets/task_overview/task_overview_step_item.dart';
@@ -21,6 +25,8 @@ class TaskOverviewPage extends StatefulWidget {
 
 class _TaskOverviewPageState extends State<TaskOverviewPage> {
   late TaskModel _currentTask;
+  final RecentTasksService _recentTasksService = RecentTasksService();
+  final TaskService _taskService = TaskService();
 
   @override
   void initState() {
@@ -36,7 +42,7 @@ class _TaskOverviewPageState extends State<TaskOverviewPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FF),
       appBar: AppHeader(
-        onLeadingPressed: () => Navigator.pop(context),
+        onLeadingPressed: () => Navigator.pop(context, true),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
@@ -47,7 +53,7 @@ class _TaskOverviewPageState extends State<TaskOverviewPage> {
             const SizedBox(height: 24),
             _buildProgressCard(primaryColor),
             const SizedBox(height: 16),
-            _buildAISummary(primaryColor),
+            _buildEditAction(primaryColor),
             const SizedBox(height: 32),
             Text(
               'Passos da tarefa',
@@ -59,8 +65,6 @@ class _TaskOverviewPageState extends State<TaskOverviewPage> {
             ),
             const SizedBox(height: 16),
             _buildStepsList(primaryColor),
-            const SizedBox(height: 24),
-            _buildActionButtons(primaryColor),
             const SizedBox(height: 40),
           ],
         ),
@@ -206,159 +210,87 @@ class _TaskOverviewPageState extends State<TaskOverviewPage> {
     );
   }
 
-  Widget _buildAISummary(Color primaryColor) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: primaryColor.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: primaryColor.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.auto_awesome, color: primaryColor, size: 18),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      'Resumo do Pato',
-                      style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87),
-                    ),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: primaryColor,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Text('IA', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Você está indo bem! Que tal continuar com o próximo passo para manter o ritmo?',
-                  style: GoogleFonts.poppins(fontSize: 13, color: Colors.black54, height: 1.4),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _toggleStepCompletion(int index) {
-    setState(() {
-      final updatedSteps = List<TaskStep>.from(_currentTask.steps);
-      final step = updatedSteps[index];
-      updatedSteps[index] = step.copyWith(
-        isCompleted: !step.isCompleted,
-        completedAt: !step.isCompleted ? DateTime.now() : null,
-      );
-      _currentTask = _currentTask.copyWith(steps: updatedSteps);
-    });
-  }
-
-  void _askDuckHelp() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        child: Container(
-          height: MediaQuery.of(context).size.height * 0.7,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-          ),
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(2),
-                ),
+  Widget _buildEditAction(Color primaryColor) {
+    return GestureDetector(
+      onTap: () async {
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => TaskFormPage(task: _currentTask)),
+        );
+        if (result == true) {
+          _refreshTask();
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: primaryColor.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: primaryColor.withValues(alpha: 0.1)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: primaryColor.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
               ),
-              const SizedBox(height: 24),
-              Row(
+              child: Icon(Icons.edit_outlined, color: primaryColor, size: 20),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CircleAvatar(
-                    backgroundColor: Colors.orange.withValues(alpha: 0.1),
-                    child: const Icon(Icons.auto_awesome, color: Colors.orange),
-                  ),
-                  const SizedBox(width: 12),
                   Text(
-                    'Ajuda do Pato',
+                    'Editar tarefa',
                     style: GoogleFonts.poppins(
-                      fontSize: 20,
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    'Modificar passos, data ou prioridade',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: Colors.black54,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF7F8FF),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: SingleChildScrollView(
-                    child: Text(
-                      'Olá! Eu sou o Pato. Vi que você está na tarefa "${_currentTask.title}".\n\nComo posso te ajudar hoje? Posso sugerir novos passos, explicar como fazer algum deles ou apenas te dar um incentivo! 🦆✨',
-                      style: GoogleFonts.poppins(fontSize: 14, height: 1.6),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                decoration: InputDecoration(
-                  hintText: 'Digite sua dúvida...',
-                  filled: true,
-                  fillColor: Colors.black.withValues(alpha: 0.05),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.all(16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                  child: const Text('Enviar para o Pato'),
-                ),
-              ),
-            ],
-          ),
+            ),
+            Icon(Icons.chevron_right, color: primaryColor.withValues(alpha: 0.5)),
+          ],
         ),
       ),
     );
+  }
+
+  void _toggleStepCompletion(int index) async {
+    final updatedSteps = List<TaskStep>.from(_currentTask.steps);
+    final step = updatedSteps[index];
+    updatedSteps[index] = step.copyWith(
+      isCompleted: !step.isCompleted,
+      completedAt: !step.isCompleted ? DateTime.now() : null,
+    );
+    
+    final updatedTask = _currentTask.copyWith(steps: updatedSteps);
+
+    // Atualiza via Provider (isso avisa todas as telas)
+    try {
+      await context.read<TaskProvider>().updateTaskProgress(updatedTask);
+      setState(() {
+        _currentTask = updatedTask;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Não foi possível salvar o progresso: $e')),
+        );
+      }
+    }
   }
 
   Widget _buildStepsList(Color primaryColor) {
@@ -392,6 +324,18 @@ class _TaskOverviewPageState extends State<TaskOverviewPage> {
     );
   }
 
+  Future<void> _refreshTask() async {
+    try {
+      final tasks = await _recentTasksService.getAllTasks();
+      final updatedTask = tasks.firstWhere((t) => t.id == _currentTask.id);
+      setState(() {
+        _currentTask = updatedTask;
+      });
+    } catch (e) {
+      debugPrint('Erro ao atualizar tarefa: $e');
+    }
+  }
+
   void _startStep(int index) async {
     final result = await Navigator.push(
       context,
@@ -401,14 +345,21 @@ class _TaskOverviewPageState extends State<TaskOverviewPage> {
     );
 
     if (result == true) {
-      setState(() {
-        final updatedSteps = List<TaskStep>.from(_currentTask.steps);
-        updatedSteps[index] = updatedSteps[index].copyWith(
-          isCompleted: true,
-          completedAt: DateTime.now(),
-        );
-        _currentTask = _currentTask.copyWith(steps: updatedSteps);
-      });
+      final updatedSteps = List<TaskStep>.from(_currentTask.steps);
+      updatedSteps[index] = updatedSteps[index].copyWith(
+        isCompleted: true,
+        completedAt: DateTime.now(),
+      );
+      final updatedTask = _currentTask.copyWith(steps: updatedSteps);
+
+      try {
+        await context.read<TaskProvider>().updateTaskProgress(updatedTask);
+        setState(() {
+          _currentTask = updatedTask;
+        });
+      } catch (e) {
+        debugPrint('Erro ao salvar conclusão do passo: $e');
+      }
     }
   }
 
@@ -422,24 +373,15 @@ class _TaskOverviewPageState extends State<TaskOverviewPage> {
             subtitle: 'Modificar passos, data...',
             color: primaryColor.withValues(alpha: 0.05),
             iconColor: primaryColor,
-            onTap: () {
-              Navigator.push(
+            onTap: () async {
+              final result = await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => TaskFormPage(task: _currentTask)),
               );
+              if (result == true) {
+                _refreshTask();
+              }
             },
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: TaskOverviewActionButton(
-            icon: Icons.auto_awesome_outlined,
-            title: 'Pedir ajuda ao Pato',
-            subtitle: 'Dúvidas, sugestões...',
-            color: const Color(0xFFFFF9E5),
-            iconColor: Colors.orange,
-            isIA: true,
-            onTap: _askDuckHelp,
           ),
         ),
       ],

@@ -19,9 +19,12 @@ class TaskService {
 
   Future<void> updateTask(String id, Map<String, dynamic> taskData) async {
     try {
-      final response = await _apiClient.post('$_tasksPath/$id', body: taskData);
+      print('DEBUG: Tentando atualizar tarefa $id com dados: $taskData');
+      final response = await _apiClient.patch('$_tasksPath/$id', body: taskData);
+      print('DEBUG: Resposta do servidor ao atualizar: Status ${response.statusCode}, Body: ${response.body}');
       _handleResponse(response, 'Falha ao atualizar tarefa');
     } catch (e) {
+      print('DEBUG: Erro capturado no updateTask: $e');
       throw Exception(_parseErrorMessage(e));
     }
   }

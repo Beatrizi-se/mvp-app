@@ -17,6 +17,7 @@ import 'package:mobile/src/screens/initial_screen_game.dart';
 import 'package:mobile/src/providers/auth_provider.dart';
 import 'package:mobile/src/providers/theme_provider.dart';
 import 'package:mobile/src/providers/settings_provider.dart';
+import 'package:mobile/src/providers/task_provider.dart';
 
 void main() {
   runApp(
@@ -25,6 +26,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        ChangeNotifierProvider(create: (_) => TaskProvider()),
       ],
       child: const MyApp(),
     ),

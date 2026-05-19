@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../models/task_model.dart';
 import '../models/task_step_model.dart';
+import '../providers/task_provider.dart';
 import '../service/task_service.dart';
 import '../widgets/task_form_header.dart';
 import '../widgets/task_form_selector_field.dart';
@@ -39,8 +41,10 @@ class _TaskFormPageState extends State<TaskFormPage> {
   void initState() {
     super.initState();
     // Só é edição se tivermos uma tarefa E essa tarefa tiver um ID (do banco)
-    isEditing = widget.task != null && widget.task!.id != null;
+    isEditing = widget.task != null && (widget.task!.id != null);
     
+    debugPrint('DEBUG: TaskFormPage - isEditing: $isEditing, id: ${widget.task?.id}');
+
     if (widget.task != null) {
       _titleController.text = widget.task!.title;
       _descController.text = widget.task!.subtitle;
@@ -238,27 +242,30 @@ class _TaskFormPageState extends State<TaskFormPage> {
     setState(() => _isLoading = true);
 
     try {
-      final task = TaskModel(
-        id: widget.task?.id,
-        title: title,
-        subtitle: subtitle,
-        category: _selectedCategory,
-        priority: _selectedPriority,
-        date: _selectedDate,
-        time: _selectedTime != null ? '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}' : null,
-        steps: _steps,
-      );
+      final taskJson = {
+        'title': title,
+        'subtitle': subtitle,
+        'category': _selectedCategory,
+        'priority': _selectedPriority,
+        'date': _selectedDate?.toIso8601String(),
+        'time': _selectedTime != null ? '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}' : null,
+        'steps': _steps.map((s) => s.toJson()).toList(),
+      };
 
       if (isEditing) {
-        if (task.id == null) {
+        final taskId = widget.task!.id;
+        if (taskId == null) {
           throw Exception('Erro interno: ID da tarefa não encontrado para edição.');
         }
-        await _taskService.updateTask(task.id!, task.toJson());
+        await _taskService.updateTask(taskId, taskJson);
       } else {
-        await _taskService.createTask(task.toJson());
+        await _taskService.createTask(taskJson);
       }
 
+      // Notifica o Provider para atualizar todas as telas
       if (mounted) {
+        context.read<TaskProvider>().fetchTasks();
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Tarefa salva com sucesso!')),
         );
