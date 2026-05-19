@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'api_client.dart';
-import '../models/task_model.dart';
+import '../models/task_step_model.dart';
 
 class TaskService {
   final ApiClient _apiClient = ApiClient();
@@ -19,7 +19,6 @@ class TaskService {
 
   Future<void> updateTask(String id, Map<String, dynamic> taskData) async {
     try {
-      // ATENÇÃO: O seu backend usa POST para a rota de atualização /tarefas/:id
       final response = await _apiClient.post('$_tasksPath/$id', body: taskData);
       _handleResponse(response, 'Falha ao atualizar tarefa');
     } catch (e) {

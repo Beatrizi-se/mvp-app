@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../models/task_model.dart';
+import '../models/task_step_model.dart';
 import 'task_step_item.dart';
 
 class TaskFormStepsList extends StatelessWidget {
@@ -8,6 +8,7 @@ class TaskFormStepsList extends StatelessWidget {
   final VoidCallback onAddStep;
   final Function(int) onDeleteStep;
   final Function(int)? onToggleStep;
+  final Function(int, int)? onReorder;
 
   const TaskFormStepsList({
     super.key,
@@ -15,6 +16,7 @@ class TaskFormStepsList extends StatelessWidget {
     required this.onAddStep,
     required this.onDeleteStep,
     this.onToggleStep,
+    this.onReorder,
   });
 
   @override
@@ -50,12 +52,20 @@ class TaskFormStepsList extends StatelessWidget {
             ),
           )
         else
-          ...steps.asMap().entries.map((entry) => TaskStepItem(
-                text: entry.value.title,
-                isCompleted: entry.value.isCompleted,
-                onToggle: onToggleStep != null ? () => onToggleStep!(entry.key) : null,
-                onDelete: () => onDeleteStep(entry.key),
-              )),
+          ReorderableListView(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            onReorder: onReorder ?? (old, newIdx) {},
+            children: steps.asMap().entries.map((entry) => Container(
+              key: ValueKey('form_step_${entry.key}'),
+              child: TaskStepItem(
+                    text: entry.value.title,
+                    isCompleted: entry.value.isCompleted,
+                    onToggle: onToggleStep != null ? () => onToggleStep!(entry.key) : null,
+                    onDelete: () => onDeleteStep(entry.key),
+                  ),
+            )).toList(),
+          ),
         TextButton.icon(
           onPressed: onAddStep,
           icon: const Icon(Icons.add, color: Color(0xFF6C63FF)),

@@ -5,7 +5,7 @@ import '../service/recent_tasks_service.dart';
 import '../widgets/task_list_card.dart';
 import '../widgets/app_header.dart';
 import '../widgets/app_bottom_navigation.dart';
-import 'task_form_page.dart';
+import 'task_overview_page.dart';
 
 class FavoritesPage extends StatefulWidget {
   const FavoritesPage({super.key});
@@ -49,8 +49,10 @@ class _FavoritesPageState extends State<FavoritesPage> {
   Future<void> _toggleFavorite(TaskModel task) async {
     try {
       await _tasksService.toggleFavorite(task);
+      if (!mounted) return;
       _fetchFavorites();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erro ao desfavoritar: $e')),
       );
@@ -174,7 +176,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => TaskFormPage(task: task)),
+              MaterialPageRoute(builder: (_) => TaskOverviewPage(task: task)),
             ).then((_) => _fetchFavorites());
           },
         );

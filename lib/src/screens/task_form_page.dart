@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/task_model.dart';
+import '../models/task_step_model.dart';
 import '../service/task_service.dart';
 import '../widgets/task_form_header.dart';
 import '../widgets/task_form_selector_field.dart';
@@ -217,8 +218,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
   void _toggleStep(int index) {
     setState(() {
       final step = _steps[index];
-      _steps[index] = TaskStep(
-        title: step.title,
+      _steps[index] = step.copyWith(
         isCompleted: !step.isCompleted,
       );
     });
@@ -249,17 +249,13 @@ class _TaskFormPageState extends State<TaskFormPage> {
         steps: _steps,
       );
 
-      final taskJson = task.toJson();
-      print('DEBUG: Tentando salvar tarefa. IsEditing: $isEditing');
-      print('DEBUG: JSON enviado: $taskJson');
-
       if (isEditing) {
         if (task.id == null) {
           throw Exception('Erro interno: ID da tarefa não encontrado para edição.');
         }
-        await _taskService.updateTask(task.id!, taskJson);
+        await _taskService.updateTask(task.id!, task.toJson());
       } else {
-        await _taskService.createTask(taskJson);
+        await _taskService.createTask(task.toJson());
       }
 
       if (mounted) {
@@ -365,6 +361,13 @@ class _TaskFormPageState extends State<TaskFormPage> {
               onAddStep: _showAddStepDialog,
               onDeleteStep: (index) => setState(() => _steps.removeAt(index)),
               onToggleStep: _toggleStep,
+              onReorder: (oldIndex, newIndex) {
+                setState(() {
+                  if (newIndex > oldIndex) newIndex -= 1;
+                  final step = _steps.removeAt(oldIndex);
+                  _steps.insert(newIndex, step);
+                });
+              },
             ),
 
             const SizedBox(height: 40),

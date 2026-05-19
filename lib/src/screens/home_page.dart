@@ -15,9 +15,8 @@ import '../widgets/app_header.dart';
 import '../widgets/side_drawer.dart';
 import '../providers/settings_provider.dart';
 import 'task_form_page.dart';
-import 'initial_screen_game.dart';
 import 'tasks_list_page.dart';
-import 'favorites_page.dart';
+import 'task_overview_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -288,8 +287,10 @@ class _HomePageState extends State<HomePage> {
             onFavoriteTap: () async {
               try {
                 await _tasksService.toggleFavorite(task);
+                if (!mounted) return;
                 _fetchTasks();
               } catch (e) {
+                if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Erro ao favoritar: $e')),
                 );
@@ -299,7 +300,7 @@ class _HomePageState extends State<HomePage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => TaskFormPage(task: task),
+                  builder: (context) => TaskOverviewPage(task: task),
                 ),
               ).then((_) => _fetchTasks());
             },

@@ -32,7 +32,7 @@ class TaskCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -107,7 +107,7 @@ class TaskCard extends StatelessWidget {
           child: CircularProgressIndicator(
             value: progress,
             strokeWidth: 6,
-            backgroundColor: primaryColor.withOpacity(0.1),
+            backgroundColor: primaryColor.withValues(alpha: 0.1),
             valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
           ),
         ),

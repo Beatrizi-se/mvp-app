@@ -1,26 +1,4 @@
-class TaskStep {
-  final String title;
-  final bool isCompleted;
-
-  TaskStep({
-    required this.title,
-    this.isCompleted = false,
-  });
-
-  factory TaskStep.fromJson(Map<String, dynamic> json) {
-    return TaskStep(
-      title: json['title'] ?? '',
-      isCompleted: json['isCompleted'] ?? false,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'title': title,
-      'isCompleted': isCompleted,
-    };
-  }
-}
+import 'task_step_model.dart';
 
 class TaskModel {
   final String? id;
@@ -45,14 +23,12 @@ class TaskModel {
     this.isFavorite = false,
   });
 
-  // Calcula o progresso (0.0 a 1.0) baseado nos passos concluídos
   double get progress {
     if (steps.isEmpty) return 0.0;
     final completedCount = steps.where((s) => s.isCompleted).length;
     return completedCount / steps.length;
   }
 
-  // Gera o texto de progresso (ex: "2/5 passos")
   String get progressText {
     if (steps.isEmpty) return 'Sem passos';
     final completedCount = steps.where((s) => s.isCompleted).length;
@@ -61,7 +37,7 @@ class TaskModel {
 
   factory TaskModel.fromJson(Map<String, dynamic> json) {
     return TaskModel(
-      id: json['id']?.toString() ?? json['_id']?.toString(), // Suporte a 'id' ou '_id' (MongoDB)
+      id: json['id']?.toString() ?? json['_id']?.toString(),
       title: json['title'] ?? '',
       subtitle: json['subtitle'] ?? '',
       category: json['category'] ?? 'Selecionar',
@@ -70,7 +46,7 @@ class TaskModel {
       time: json['time'],
       steps: (json['steps'] as List? ?? [])
           .map((step) => step is String 
-              ? TaskStep(title: step) // Suporte a lista de strings simples
+              ? TaskStep(title: step)
               : TaskStep.fromJson(step as Map<String, dynamic>))
           .toList(),
       isFavorite: json['isFavorite'] ?? false,
