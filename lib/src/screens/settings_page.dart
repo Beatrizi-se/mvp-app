@@ -101,7 +101,7 @@ class SettingsPage extends StatelessWidget {
                 context,
                 icon: Icons.info_outline,
                 title: 'Sobre o Pato',
-                onTap: () => Navigator.pushNamed(context, '/about'),
+                onTap: () => Navigator.pushNamed(context, '/purpose'),
               ),
             ]),
             const SizedBox(height: 40),
