@@ -167,6 +167,51 @@ class _TaskFormPageState extends State<TaskFormPage> {
     );
   }
 
+  Future<void> _handleGenerateAI() async {
+    final title = _titleController.text.trim();
+    final subtitle = _descController.text.trim();
+
+    if (title.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Insira um título para que o Pato possa ajudar!')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final aiSteps = await _taskService.generateStepsWithAI(title, subtitle);
+      
+      if (aiSteps.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('O Pato não conseguiu criar passos. Tente um título mais detalhado! 🦆😕')),
+          );
+        }
+        return;
+      }
+
+      setState(() {
+        _steps.addAll(aiSteps);
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('O Pato desmembrou a tarefa para você! 🦆✨')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro na IA: ${e.toString().replaceAll('Exception: ', '')}')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   void _toggleStep(int index) {
     setState(() {
       final step = _steps[index];
@@ -309,15 +354,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
             TaskFormAISection(
               useAI: _useAI,
               onToggleAI: (v) => setState(() => _useAI = v),
-              onGenerateSteps: () {
-                setState(() {
-                  _steps.addAll([
-                    TaskStep(title: 'Analisar requisitos'),
-                    TaskStep(title: 'Esboçar design'),
-                    TaskStep(title: 'Desenvolver protótipo'),
-                  ]);
-                });
-              },
+              onGenerateSteps: _handleGenerateAI,
             ),
             
             const SizedBox(height: 32),

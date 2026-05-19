@@ -2,21 +2,34 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_button.dart';
 
-class TaskInputCard extends StatelessWidget {
-  final VoidCallback onAddTask;
+class TaskInputCard extends StatefulWidget {
+  final Function(String) onAddTask;
 
   const TaskInputCard({super.key, required this.onAddTask});
+
+  @override
+  State<TaskInputCard> createState() => _TaskInputCardState();
+}
+
+class _TaskInputCardState extends State<TaskInputCard> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8E6FF).withOpacity(0.95),
+        color: const Color(0xFFE8E6FF).withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -30,7 +43,7 @@ class TaskInputCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF6C63FF).withOpacity(0.1),
+                  color: const Color(0xFF6C63FF).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
@@ -54,6 +67,7 @@ class TaskInputCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           TextField(
+            controller: _controller,
             decoration: InputDecoration(
               hintText: 'Digite sua tarefa...',
               hintStyle: GoogleFonts.poppins(color: Colors.black26),
@@ -72,7 +86,13 @@ class TaskInputCard extends StatelessWidget {
             icon: Icons.chevron_right,
             iconAtEnd: true,
             borderRadius: 16,
-            onPressed: onAddTask,
+            onPressed: () {
+              final text = _controller.text.trim();
+              widget.onAddTask(text);
+              if (text.isNotEmpty) {
+                _controller.clear();
+              }
+            },
           ),
         ],
       ),

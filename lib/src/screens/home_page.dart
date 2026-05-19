@@ -159,11 +159,13 @@ class _HomePageState extends State<HomePage> {
                       ),
                       const SizedBox(height: 24),
                       TaskInputCard(
-                        onAddTask: () {
+                        onAddTask: (text) {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const TaskFormPage(),
+                              builder: (context) => TaskFormPage(
+                                task: text.isNotEmpty ? TaskModel(title: text, subtitle: '') : null,
+                              ),
                             ),
                           ).then((_) => _fetchTasks());
                         },

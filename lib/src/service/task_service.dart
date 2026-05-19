@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'api_client.dart';
+import '../models/task_model.dart';
 
 class TaskService {
   final ApiClient _apiClient = ApiClient();
@@ -31,6 +32,41 @@ class TaskService {
       final response = await _apiClient.delete('$_tasksPath/$id');
       _handleResponse(response, 'Falha ao remover tarefa');
     } catch (e) {
+      throw Exception(_parseErrorMessage(e));
+    }
+  }
+
+  Future<List<TaskStep>> generateStepsWithAI(String title, String subtitle) async {
+    try {
+      final response = await _apiClient.post('$_tasksPath/desmembrar', body: {
+        'title': title,
+        'subtitle': subtitle,
+      });
+
+      print('DEBUG: Resposta bruta da IA: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final List<dynamic> stepsJson = data['steps'] ?? [];
+        
+        // Mapeamento flexível para aceitar diferentes formatos do backend
+        return stepsJson.map((s) {
+          if (s is String) {
+            return TaskStep(title: s, isCompleted: false);
+          } else if (s is Map) {
+            return TaskStep(
+              title: s['title']?.toString() ?? s['step']?.toString() ?? 'Passo sem título',
+              isCompleted: s['isCompleted'] ?? false,
+            );
+          }
+          return TaskStep(title: 'Passo desconhecido');
+        }).toList();
+      } else {
+        final data = jsonDecode(response.body);
+        throw Exception(data['erro'] ?? 'Falha ao gerar passos com IA');
+      }
+    } catch (e) {
+      print('DEBUG: Erro ao processar passos da IA: $e');
       throw Exception(_parseErrorMessage(e));
     }
   }
