@@ -19,12 +19,9 @@ class TaskService {
 
   Future<void> updateTask(String id, Map<String, dynamic> taskData) async {
     try {
-      print('DEBUG: Tentando atualizar tarefa $id com dados: $taskData');
       final response = await _apiClient.patch('$_tasksPath/$id', body: taskData);
-      print('DEBUG: Resposta do servidor ao atualizar: Status ${response.statusCode}, Body: ${response.body}');
       _handleResponse(response, 'Falha ao atualizar tarefa');
     } catch (e) {
-      print('DEBUG: Erro capturado no updateTask: $e');
       throw Exception(_parseErrorMessage(e));
     }
   }
@@ -44,8 +41,6 @@ class TaskService {
         'title': title,
         'subtitle': subtitle,
       });
-
-      print('DEBUG: Resposta bruta da IA: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -68,7 +63,6 @@ class TaskService {
         throw Exception(data['erro'] ?? 'Falha ao gerar passos com IA');
       }
     } catch (e) {
-      print('DEBUG: Erro ao processar passos da IA: $e');
       throw Exception(_parseErrorMessage(e));
     }
   }

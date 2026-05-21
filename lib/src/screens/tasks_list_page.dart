@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../models/task_model.dart';
 import '../providers/task_provider.dart';
-import '../service/recent_tasks_service.dart';
 import '../widgets/task_list_card.dart';
 import '../widgets/duck_tip_card.dart';
 import '../widgets/app_bottom_navigation.dart';

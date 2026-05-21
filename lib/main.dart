@@ -40,7 +40,6 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     const primaryColor = Color(0xFF6C63FF);
     const darkPurple = Color(0xFF311B92);
-    final themeProvider = Provider.of<ThemeProvider>(context);
     final settingsProvider = Provider.of<SettingsProvider>(context);
 
     // Configura o tema base baseado no alto contraste
