@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../screens/about_page.dart';
 import '../screens/logout_page.dart';
-import '../screens/settings_page.dart';
 
 class SideDrawer extends StatelessWidget {
   const SideDrawer({super.key});

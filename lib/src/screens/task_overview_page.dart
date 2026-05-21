@@ -6,11 +6,9 @@ import '../models/task_model.dart';
 import '../models/task_step_model.dart';
 import '../providers/task_provider.dart';
 import '../service/recent_tasks_service.dart';
-import '../service/task_service.dart';
 import '../widgets/app_header.dart';
 import '../widgets/task_overview/task_overview_badge.dart';
 import '../widgets/task_overview/task_overview_step_item.dart';
-import '../widgets/task_overview/task_overview_action_button.dart';
 import 'step_focus_page.dart';
 import 'task_form_page.dart';
 
@@ -26,7 +24,6 @@ class TaskOverviewPage extends StatefulWidget {
 class _TaskOverviewPageState extends State<TaskOverviewPage> {
   late TaskModel _currentTask;
   final RecentTasksService _recentTasksService = RecentTasksService();
-  final TaskService _taskService = TaskService();
 
   @override
   void initState() {
@@ -353,6 +350,9 @@ class _TaskOverviewPageState extends State<TaskOverviewPage> {
       final updatedTask = _currentTask.copyWith(steps: updatedSteps);
 
       try {
+        
+        if (!mounted) return;
+
         await context.read<TaskProvider>().updateTaskProgress(updatedTask);
         setState(() {
           _currentTask = updatedTask;
@@ -363,28 +363,4 @@ class _TaskOverviewPageState extends State<TaskOverviewPage> {
     }
   }
 
-  Widget _buildActionButtons(Color primaryColor) {
-    return Row(
-      children: [
-        Expanded(
-          child: TaskOverviewActionButton(
-            icon: Icons.edit_outlined,
-            title: 'Editar tarefa',
-            subtitle: 'Modificar passos, data...',
-            color: primaryColor.withValues(alpha: 0.05),
-            iconColor: primaryColor,
-            onTap: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => TaskFormPage(task: _currentTask)),
-              );
-              if (result == true) {
-                _refreshTask();
-              }
-            },
-          ),
-        ),
-      ],
-    );
-  }
 }

@@ -60,9 +60,9 @@ class HowItWorksPage extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(0.1),
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2)),
+                border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
               ),
               child: Column(
                 children: [

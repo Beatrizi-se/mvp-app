@@ -200,7 +200,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 type: AppButtonType.outlined,
                 leftIcon: const Icon(Icons.account_circle_outlined, color: Colors.red, size: 20),
                 onPressed: () {
-                  // TODO: Lógica de cadastro com Google
+                  // TODO: Lógica de cadastro com Google 
                 },
               ),
               const SizedBox(height: 32),

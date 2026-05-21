@@ -5,7 +5,6 @@ import '../widgets/duck_tip_card.dart';
 import '../widgets/memory_button.dart';
 import '../widgets/app_bottom_navigation.dart';
 import '../widgets/app_header.dart';
-import 'tasks_list_page.dart';
 
 class InitialScreenGame extends StatefulWidget {
   const InitialScreenGame({super.key});

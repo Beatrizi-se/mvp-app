@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/app_header.dart';
-import '../widgets/app_bottom_navigation.dart';
 import '../widgets/side_drawer.dart';
 
 class ProfilePage extends StatelessWidget {

@@ -48,7 +48,7 @@ class AppButton extends StatelessWidget {
       case AppButtonType.ghost:
         return _buildGhostButton(primaryColor);
       case AppButtonType.primary:
-      default:
+      
         return _buildElevatedButton(primaryColor);
     }
   }

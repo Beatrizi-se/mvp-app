@@ -11,6 +11,7 @@ import '../widgets/task_form_ai_section.dart';
 import '../widgets/task_form_steps_list.dart';
 import '../widgets/app_text_field.dart';
 import '../widgets/app_button.dart';
+import '../service/notification_service.dart';
 
 class TaskFormPage extends StatefulWidget {
   final TaskModel? task;
@@ -384,7 +385,10 @@ class _TaskFormPageState extends State<TaskFormPage> {
                   text: isEditing ? 'Salvar alterações' : 'Criar tarefa',
                   icon: Icons.check,
                   borderRadius: 16,
-                  onPressed: _handleSave,
+                  onPressed: () async {
+          _handleSave(); 
+          await NotificationService().testarLembrete(); 
+        },
                 ),
             const SizedBox(height: 20),
           ],

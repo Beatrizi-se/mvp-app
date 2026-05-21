@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../config/api_config.dart';
@@ -14,7 +15,7 @@ class ApiClient {
   Future<http.Response> get(String path) async {
     final token = await _getToken();
     final url = Uri.parse('${ApiConfig.baseUrl}$path');
-    print('DEBUG: GET $url');
+    debugPrint('DEBUG: GET $url');
     return await _client.get(
       url,
       headers: ApiConfig.headers(token),
@@ -24,8 +25,8 @@ class ApiClient {
   Future<http.Response> post(String path, {dynamic body}) async {
     final token = await _getToken();
     final url = Uri.parse('${ApiConfig.baseUrl}$path');
-    print('DEBUG: POST $url');
-    print('DEBUG: Body: ${jsonEncode(body)}');
+    debugPrint('DEBUG: POST $url');
+    debugPrint('DEBUG: Body: ${jsonEncode(body)}');
     return await _client.post(
       url,
       headers: ApiConfig.headers(token),
@@ -36,7 +37,7 @@ class ApiClient {
   Future<http.Response> put(String path, {dynamic body}) async {
     final token = await _getToken();
     final url = Uri.parse('${ApiConfig.baseUrl}$path');
-    print('DEBUG: PUT $url');
+    debugPrint('DEBUG: PUT $url');
     return await _client.put(
       url,
       headers: ApiConfig.headers(token),
@@ -47,7 +48,7 @@ class ApiClient {
   Future<http.Response> patch(String path, {dynamic body}) async {
     final token = await _getToken();
     final url = Uri.parse('${ApiConfig.baseUrl}$path');
-    print('DEBUG: PATCH $url');
+    debugPrint('DEBUG: PATCH $url');
     return await _client.patch(
       url,
       headers: ApiConfig.headers(token),
@@ -58,7 +59,7 @@ class ApiClient {
   Future<http.Response> delete(String path) async {
     final token = await _getToken();
     final url = Uri.parse('${ApiConfig.baseUrl}$path');
-    print('DEBUG: DELETE $url');
+    debugPrint('DEBUG: DELETE $url');
     return await _client.delete(
       url,
       headers: ApiConfig.headers(token),
