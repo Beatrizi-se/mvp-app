@@ -63,7 +63,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> updateProfile(String nome, String email, {String? profileImage}) async {
-    if (_user == null || _user!.token == null) {
+    if (_user == null) {
       throw Exception('Usuário não autenticado');
     }
 
@@ -72,7 +72,7 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       final updatedUser = await _authService.updateProfile(
-        _user!.token!, 
+        _user!.token, 
         nome, 
         email, 
         profileImage: profileImage

@@ -7,7 +7,7 @@ class ApiConfig {
       'Accept': 'application/json',
     };
     
-    if (token != null && token.isNotEmpty) {
+    if (token?.isNotEmpty ?? false) {
       headers['Authorization'] = 'Bearer $token';
     }
     

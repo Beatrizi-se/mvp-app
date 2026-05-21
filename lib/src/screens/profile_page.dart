@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../models/user_model.dart';
 import '../widgets/app_header.dart';
 import '../widgets/side_drawer.dart';
 import '../widgets/app_button.dart';
@@ -85,26 +86,27 @@ class _ProfilePageState extends State<ProfilePage> {
         email, 
         profileImage: _base64Image
       );
+      
+      if (!mounted) return;
+      
       setState(() => _isEditing = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Perfil atualizado com sucesso! 🦆✨')),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Perfil atualizado com sucesso! 🦆✨')),
+      );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao atualizar perfil: $e')),
-        );
-      }
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao atualizar perfil: $e')),
+      );
     }
   }
 
-  Widget _buildProfileImage(authProviderUser) {
-    if (authProviderUser?.profileImage != null && authProviderUser!.profileImage!.isNotEmpty) {
+  Widget _buildProfileImage(UserModel? authProviderUser) {
+    if (authProviderUser?.profileImage?.isNotEmpty ?? false) {
       try {
         return Image.memory(
-          base64Decode(authProviderUser.profileImage!),
+          base64Decode(authProviderUser!.profileImage!),
           height: 100,
           width: 100,
           fit: BoxFit.cover,
@@ -315,9 +317,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           Icon(Icons.calendar_month_outlined, color: primaryColor, size: 16),
                           const SizedBox(width: 8),
                           Text(
-                            user?.createdAt != null 
-                                ? 'Membro desde ${DateFormat('MMM/yyyy', 'pt_BR').format(user!.createdAt!)}'
-                                : 'Membro desde ${DateFormat('MMM/yyyy', 'pt_BR').format(DateTime.now())}',
+                            'Membro desde ${DateFormat('MMM/yyyy', 'pt_BR').format(user?.createdAt ?? DateTime.now())}',
                             style: GoogleFonts.poppins(
                               fontSize: 12,
                               color: primaryColor,

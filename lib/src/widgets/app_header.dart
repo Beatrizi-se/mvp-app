@@ -43,9 +43,9 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                 radius: 20,
                 backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
                 child: ClipOval(
-                  child: user?.profileImage != null && user!.profileImage!.isNotEmpty
+                  child: (user?.profileImage?.isNotEmpty ?? false)
                       ? Image.memory(
-                          base64Decode(user.profileImage!),
+                          base64Decode(user!.profileImage!),
                           height: 40,
                           width: 40,
                           fit: BoxFit.cover,

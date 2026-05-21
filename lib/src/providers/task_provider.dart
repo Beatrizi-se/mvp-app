@@ -16,7 +16,6 @@ class TaskProvider with ChangeNotifier {
   String? get errorMessage => _errorMessage;
 
   List<TaskModel> get recentTasks {
-    // Retorna as 3 tarefas mais recentes baseadas na data de criação ou ordem do banco
     return _tasks.take(3).toList();
   }
 

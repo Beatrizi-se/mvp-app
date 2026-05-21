@@ -42,7 +42,7 @@ class TaskModel {
       subtitle: json['subtitle'] ?? '',
       category: json['category'] ?? 'Selecionar',
       priority: json['priority'] ?? 'Normal',
-      date: json['date'] != null ? DateTime.tryParse(json['date']) : null,
+      date: DateTime.tryParse(json['date'] ?? ''),
       time: json['time'],
       steps: (json['steps'] as List? ?? [])
           .map((step) => step is String 

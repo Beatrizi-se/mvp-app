@@ -26,14 +26,14 @@ class SideDrawer extends StatelessWidget {
             currentAccountPicture: CircleAvatar(
               backgroundColor: Colors.white,
               child: ClipOval(
-                child: user?.profileImage != null && user!.profileImage!.isNotEmpty
+                child: (user?.profileImage?.isNotEmpty ?? false)
                     ? Image.memory(
-                        base64Decode(user.profileImage!),
+                        base64Decode(user!.profileImage!),
                         height: 80,
                         width: 80,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => Text(
-                          user?.nome.substring(0, 1).toUpperCase() ?? 'U',
+                          user.nome.isNotEmpty ? user.nome[0].toUpperCase() : 'U',
                           style: TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
@@ -42,7 +42,7 @@ class SideDrawer extends StatelessWidget {
                         ),
                       )
                     : Text(
-                        user?.nome.substring(0, 1).toUpperCase() ?? 'U',
+                        (user?.nome.isNotEmpty ?? false) ? user!.nome[0].toUpperCase() : 'U',
                         style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,

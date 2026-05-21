@@ -42,18 +42,20 @@ class _TaskFormPageState extends State<TaskFormPage> {
   void initState() {
     super.initState();
     // Só é edição se tivermos uma tarefa E essa tarefa tiver um ID (do banco)
-    isEditing = widget.task != null && (widget.task!.id != null);
+    isEditing = widget.task?.id != null;
     
     debugPrint('DEBUG: TaskFormPage - isEditing: $isEditing, id: ${widget.task?.id}');
 
-    if (widget.task != null) {
-      _titleController.text = widget.task!.title;
-      _descController.text = widget.task!.subtitle;
-      _selectedCategory = widget.task!.category;
-      _selectedPriority = widget.task!.priority;
-      _selectedDate = widget.task!.date;
-      if (widget.task!.time != null) {
-        final parts = widget.task!.time!.split(':');
+    final task = widget.task;
+    if (task != null) {
+      _titleController.text = task.title;
+      _descController.text = task.subtitle;
+      _selectedCategory = task.category;
+      _selectedPriority = task.priority;
+      _selectedDate = task.date;
+      final taskTime = task.time;
+      if (taskTime != null) {
+        final parts = taskTime.split(':');
         if (parts.length == 2) {
           _selectedTime = TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
         }
