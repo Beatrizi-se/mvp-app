@@ -1,25 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:mobile/src/screens/home_page.dart';
-import 'package:mobile/src/screens/login_screen.dart';
-import 'package:mobile/src/screens/sign_up_screen.dart';
-import 'package:mobile/src/screens/task_form_page.dart';
-import 'package:mobile/src/screens/logout_page.dart';
-import 'package:mobile/src/screens/profile_page.dart';
-import 'package:mobile/src/screens/settings_page.dart';
-import 'package:mobile/src/screens/tasks_list_page.dart';
-import 'package:mobile/src/screens/favorites_page.dart';
-import 'package:mobile/src/screens/terms_and_services_page.dart';
-import 'package:mobile/src/screens/purpose_page.dart';
-import 'package:mobile/src/screens/how_it_works_page.dart';
-import 'package:mobile/src/screens/initial_screen_game.dart';
-import 'package:mobile/src/providers/auth_provider.dart';
-import 'package:mobile/src/providers/theme_provider.dart';
-import 'package:mobile/src/providers/settings_provider.dart';
-import 'package:mobile/src/providers/task_provider.dart';
+import 'package:pato/src/screens/home_page.dart';
+import 'package:pato/src/screens/login_screen.dart';
+import 'package:pato/src/screens/sign_up_screen.dart';
+import 'package:pato/src/screens/task_form_page.dart';
+import 'package:pato/src/screens/logout_page.dart';
+import 'package:pato/src/screens/profile_page.dart';
+import 'package:pato/src/screens/settings_page.dart';
+import 'package:pato/src/screens/tasks_list_page.dart';
+import 'package:pato/src/screens/favorites_page.dart';
+import 'package:pato/src/screens/terms_and_services_page.dart';
+import 'package:pato/src/screens/purpose_page.dart';
+import 'package:pato/src/screens/how_it_works_page.dart';
+import 'package:pato/src/screens/initial_screen_game.dart';
+import 'package:pato/src/providers/auth_provider.dart';
+import 'package:pato/src/providers/theme_provider.dart';
+import 'package:pato/src/providers/settings_provider.dart';
+import 'package:pato/src/providers/task_provider.dart';
+import 'package:pato/src/service/notification_service.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
-void main() {
+void main() async {
+  
+  WidgetsFlutterBinding.ensureInitialized();
+
+  
+  await NotificationService().init();
+
+  
   runApp(
     MultiProvider(
       providers: [
@@ -29,7 +38,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => TaskProvider()),
       ],
       child: const MyApp(),
-    ),
+    ), // MultiProvider
   );
 }
 
@@ -40,9 +49,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     const primaryColor = Color(0xFF6C63FF);
     const darkPurple = Color(0xFF311B92);
+    Provider.of<ThemeProvider>(context);
     final settingsProvider = Provider.of<SettingsProvider>(context);
 
-    // Configura o tema base baseado no alto contraste
+   
     final lightTheme = ThemeData(
       useMaterial3: true,
       scaffoldBackgroundColor: settingsProvider.highContrast 
@@ -60,8 +70,16 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Pato',
-      themeMode: ThemeMode.light, // Mantendo fixo conforme sua preferência
+      themeMode: ThemeMode.light, 
       theme: lightTheme,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('pt', 'BR'),
+      ],
       builder: (context, child) {
         // Aplica a escala de texto global
         return MediaQuery(

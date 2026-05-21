@@ -61,4 +61,28 @@ class AuthProvider extends ChangeNotifier {
     _user = null;
     notifyListeners();
   }
+
+  Future<void> updateProfile(String nome, String email, {String? profileImage}) async {
+    if (_user == null || _user!.token == null) {
+      throw Exception('Usuário não autenticado');
+    }
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final updatedUser = await _authService.updateProfile(
+        _user!.token!, 
+        nome, 
+        email, 
+        profileImage: profileImage
+      );
+      _user = updatedUser;
+    } catch (e) {
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }

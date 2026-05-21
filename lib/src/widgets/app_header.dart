@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 
 class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onLeadingPressed;
@@ -14,6 +17,10 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.user;
+
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
@@ -28,18 +35,28 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
       centerTitle: true,
       actions: [
         if (showProfile)
-          IconButton(
-            icon: const Icon(
-              Icons.account_circle_outlined,
-              color: Colors.black87,
-              size: 40,
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: GestureDetector(
+              onTap: () => Navigator.pushNamed(context, '/profile'),
+              child: CircleAvatar(
+                radius: 20,
+                backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                child: ClipOval(
+                  child: user?.profileImage != null && user!.profileImage!.isNotEmpty
+                      ? Image.memory(
+                          base64Decode(user.profileImage!),
+                          height: 40,
+                          width: 40,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => 
+                              const Icon(Icons.account_circle, color: Colors.black87, size: 40),
+                        )
+                      : const Icon(Icons.account_circle, color: Colors.black87, size: 40),
+                ),
+              ),
             ),
-            onPressed: () {
-              // Garante que o ícone de perfil leve sempre para a tela de perfil
-              Navigator.pushNamed(context, '/profile');
-            },
           ),
-        const SizedBox(width: 8),
       ],
     );
   }

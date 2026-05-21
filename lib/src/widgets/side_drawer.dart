@@ -1,10 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../screens/about_page.dart';
 import '../screens/logout_page.dart';
-import '../screens/settings_page.dart';
 
 class SideDrawer extends StatelessWidget {
   const SideDrawer({super.key});
@@ -25,13 +25,30 @@ class SideDrawer extends StatelessWidget {
             ),
             currentAccountPicture: CircleAvatar(
               backgroundColor: Colors.white,
-              child: Text(
-                user?.nome.substring(0, 1).toUpperCase() ?? 'U',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
-                ),
+              child: ClipOval(
+                child: user?.profileImage != null && user!.profileImage!.isNotEmpty
+                    ? Image.memory(
+                        base64Decode(user.profileImage!),
+                        height: 80,
+                        width: 80,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Text(
+                          user?.nome.substring(0, 1).toUpperCase() ?? 'U',
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      )
+                    : Text(
+                        user?.nome.substring(0, 1).toUpperCase() ?? 'U',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
               ),
             ),
             accountName: Text(

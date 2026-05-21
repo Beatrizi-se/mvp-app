@@ -6,6 +6,7 @@ class AppTextField extends StatefulWidget {
   final String hintText;
   final TextEditingController? controller;
   final IconData? suffixIcon;
+  final IconData? icon;
   final bool isPassword;
   final int maxLines;
   final int? maxLength;
@@ -18,6 +19,7 @@ class AppTextField extends StatefulWidget {
     required this.hintText,
     this.controller,
     this.suffixIcon,
+    this.icon,
     this.isPassword = false,
     this.maxLines = 1,
     this.maxLength,
@@ -78,6 +80,7 @@ class _AppTextFieldState extends State<AppTextField> {
           keyboardType: widget.keyboardType,
           style: GoogleFonts.poppins(fontSize: 14),
           decoration: InputDecoration(
+            prefixIcon: widget.icon != null ? Icon(widget.icon, color: Colors.black38, size: 20) : null,
             hintText: widget.hintText,
             hintStyle: GoogleFonts.poppins(color: Colors.black26, fontSize: 14),
             filled: true,

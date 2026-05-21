@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import 'api_client.dart';
 import '../models/task_step_model.dart';
@@ -19,9 +20,12 @@ class TaskService {
 
   Future<void> updateTask(String id, Map<String, dynamic> taskData) async {
     try {
+      debugPrint('DEBUG: Tentando atualizar tarefa $id com dados: $taskData');
       final response = await _apiClient.patch('$_tasksPath/$id', body: taskData);
+      debugPrint('DEBUG: Resposta do servidor ao atualizar: Status ${response.statusCode}, Body: ${response.body}');
       _handleResponse(response, 'Falha ao atualizar tarefa');
     } catch (e) {
+      debugPrint('DEBUG: Erro capturado no updateTask: $e');
       throw Exception(_parseErrorMessage(e));
     }
   }
@@ -42,11 +46,12 @@ class TaskService {
         'subtitle': subtitle,
       });
 
-      if (response.statusCode == 200) {
+      debugPrint('DEBUG: Resposta bruta da IA (Status ${response.statusCode}): ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
         final List<dynamic> stepsJson = data['steps'] ?? [];
         
-        // Mapeamento flexível para aceitar diferentes formatos do backend
         return stepsJson.map((s) {
           if (s is String) {
             return TaskStep(title: s, isCompleted: false);
@@ -59,10 +64,16 @@ class TaskService {
           return TaskStep(title: 'Passo desconhecido');
         }).toList();
       } else {
-        final data = jsonDecode(response.body);
-        throw Exception(data['erro'] ?? 'Falha ao gerar passos com IA');
+        // Tenta capturar o erro do JSON se houver
+        String errorMsg = 'Falha ao gerar passos com IA';
+        try {
+          final data = jsonDecode(response.body);
+          errorMsg = data['erro'] ?? data['message'] ?? errorMsg;
+        } catch (_) {}
+        throw Exception(errorMsg);
       }
     } catch (e) {
+      debugPrint('DEBUG: Erro ao processar passos da IA: $e');
       throw Exception(_parseErrorMessage(e));
     }
   }

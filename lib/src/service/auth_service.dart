@@ -7,6 +7,7 @@ class AuthService {
   // As rotas de autenticação agora usam o prefixo /auth conforme a nova estrutura do servidor
   static const String _loginPath = '/auth/login';
   static const String _registerPath = '/auth/register';
+  static const String _profilePath = '/auth/perfil';
 
   Future<UserModel> login(String email, String password) async {
     try {
@@ -39,6 +40,33 @@ class AuthService {
 
       if (response.statusCode != 201 && response.statusCode != 200) {
         throw await _handleError(response, 'Falha ao realizar cadastro');
+      }
+    } catch (e) {
+      throw Exception(_parseErrorMessage(e));
+    }
+  }
+
+  Future<UserModel> updateProfile(String token, String nome, String email, {String? profileImage}) async {
+    try {
+      final response = await http.patch(
+        Uri.parse('${ApiConfig.baseUrl}$_profilePath'),
+        headers: ApiConfig.headers(token),
+        body: jsonEncode({
+          'nome': nome,
+          'email': email,
+          if (profileImage != null) 'profileImage': profileImage,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        // O servidor pode retornar o usuário atualizado. 
+        if (data['user'] != null) {
+          return UserModel.fromJson({...data['user'], 'token': token});
+        }
+        throw Exception('A API de perfil deve retornar o objeto do usuário atualizado.');
+      } else {
+        throw await _handleError(response, 'Falha ao atualizar perfil');
       }
     } catch (e) {
       throw Exception(_parseErrorMessage(e));

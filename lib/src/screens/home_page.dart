@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../models/task_model.dart';
-import '../service/recent_tasks_service.dart';
 import '../providers/auth_provider.dart';
 import '../providers/task_provider.dart';
 
@@ -212,7 +211,7 @@ class _HomePageState extends State<HomePage> {
     final taskProvider = Provider.of<TaskProvider>(context);
     final isLoading = taskProvider.isLoading;
     final errorMessage = taskProvider.errorMessage;
-    final recentTasks = taskProvider.recentTasks;
+    final recentTasks = taskProvider.tasks; // Agora pegando todas as tarefas
 
     if (isLoading) {
       return const SizedBox(
@@ -273,7 +272,7 @@ class _HomePageState extends State<HomePage> {
               try {
                 await taskProvider.toggleFavorite(task);
               } catch (e) {
-                if (!mounted) return;
+                if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Erro ao favoritar: $e')),
                 );

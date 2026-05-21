@@ -1,5 +1,5 @@
 class ApiConfig {
-  static const String baseUrl = 'http://172.20.10.3:3000';
+  static const String baseUrl = 'http://192.168.100.33:3000';
   
   static Map<String, String> headers([String? token]) {
     final headers = {

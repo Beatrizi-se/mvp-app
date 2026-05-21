@@ -1,12 +1,123 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/app_header.dart';
-import '../widgets/app_bottom_navigation.dart';
 import '../widgets/side_drawer.dart';
+import '../widgets/app_button.dart';
+import '../widgets/app_text_field.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  bool _isEditing = false;
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _picker = ImagePicker();
+  String? _base64Image;
+  File? _selectedImage;
+
+  @override
+  void initState() {
+    super.initState();
+    _resetFields();
+  }
+
+  void _resetFields() {
+    final user = context.read<AuthProvider>().user;
+    _nameController.text = user?.nome ?? '';
+    _emailController.text = user?.email ?? '';
+    _base64Image = user?.profileImage;
+    _selectedImage = null;
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 75,
+      );
+
+      if (image != null) {
+        final bytes = await File(image.path).readAsBytes();
+        setState(() {
+          _selectedImage = File(image.path);
+          _base64Image = base64Encode(bytes);
+        });
+      }
+    } catch (e) {
+      debugPrint('Erro ao selecionar imagem: $e');
+    }
+  }
+
+  Future<void> _handleUpdate() async {
+    final nome = _nameController.text.trim();
+    final email = _emailController.text.trim();
+
+    if (nome.isEmpty || email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, preencha todos os campos.')),
+      );
+      return;
+    }
+
+    try {
+      await context.read<AuthProvider>().updateProfile(
+        nome, 
+        email, 
+        profileImage: _base64Image
+      );
+      setState(() => _isEditing = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Perfil atualizado com sucesso! 🦆✨')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao atualizar perfil: $e')),
+        );
+      }
+    }
+  }
+
+  Widget _buildProfileImage(authProviderUser) {
+    if (authProviderUser?.profileImage != null && authProviderUser!.profileImage!.isNotEmpty) {
+      try {
+        return Image.memory(
+          base64Decode(authProviderUser.profileImage!),
+          height: 100,
+          width: 100,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Image.asset('assets/pato_logo.png', height: 60);
+          },
+        );
+      } catch (e) {
+        return Image.asset('assets/pato_logo.png', height: 60);
+      }
+    }
+    return Image.asset('assets/pato_logo.png', height: 60);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +132,7 @@ class ProfilePage extends StatelessWidget {
       appBar: AppHeader(
         showProfile: false,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface),
+          icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface, size: 32),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -30,19 +141,39 @@ class ProfilePage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Meu perfil',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Gerencie suas informações',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Meu perfil',
+                      style: GoogleFonts.poppins(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Gerencie suas informações',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ],
+                ),
+                if (!_isEditing)
+                  IconButton(
+                    onPressed: () => setState(() => _isEditing = true),
+                    icon: Icon(Icons.edit_outlined, color: primaryColor),
+                    style: IconButton.styleFrom(
+                      backgroundColor: primaryColor.withValues(alpha: 0.1),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 24),
             
@@ -54,6 +185,13 @@ class ProfilePage extends StatelessWidget {
                 color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.1)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.02),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Column(
                 children: [
@@ -63,125 +201,139 @@ class ProfilePage extends StatelessWidget {
                         radius: 50,
                         backgroundColor: primaryColor.withValues(alpha: 0.1),
                         child: ClipOval(
-                          child: Image.asset(
-                            'assets/pato_logo.png', // Fallback profile image
-                            height: 60,
-                          ),
+                          child: _selectedImage != null
+                              ? Image.file(_selectedImage!, height: 100, width: 100, fit: BoxFit.cover)
+                              : _buildProfileImage(user),
                         ),
                       ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.surface,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: primaryColor,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.camera_alt,
-                              color: Colors.white,
-                              size: 16,
+                      if (_isEditing)
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: GestureDetector(
+                            onTap: _pickImage,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.surface,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: primaryColor,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.camera_alt,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        user?.nome ?? 'Pato Amigável',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Icon(Icons.edit_outlined, color: primaryColor, size: 20),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    user?.email ?? 'pato.amigavel@email.com',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: primaryColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.calendar_month_outlined, color: primaryColor, size: 16),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Membro desde Mai/2024',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: primaryColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 32),
                   
-                  // Menu Items
-                  _buildProfileMenuItem(
-                    context,
-                    icon: Icons.person_outline,
-                    title: 'Editar informações',
-                    onTap: () {},
-                  ),
-                  Divider(height: 1, color: theme.colorScheme.onSurface.withValues(alpha: 0.1)),
-                  _buildProfileMenuItem(
-                    context,
-                    icon: Icons.lock_outline,
-                    title: 'Alterar senha',
-                    onTap: () {},
-                  ),
+                  if (_isEditing) ...[
+                    AppTextField(
+                      label: 'Nome completo',
+                      controller: _nameController,
+                      hintText: 'Como quer ser chamado?',
+                      icon: Icons.person_outline,
+                    ),
+                    const SizedBox(height: 16),
+                    AppTextField(
+                      label: 'E-mail',
+                      controller: _emailController,
+                      hintText: 'Seu melhor e-mail',
+                      icon: Icons.email_outlined,
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 32),
+                    if (authProvider.isLoading)
+                      const CircularProgressIndicator()
+                    else
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () {
+                                setState(() {
+                                  _isEditing = false;
+                                  _resetFields();
+                                });
+                              },
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              ),
+                              child: Text('Cancelar', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: AppButton(
+                              text: 'Salvar',
+                              onPressed: _handleUpdate,
+                              borderRadius: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                  ] else ...[
+                    Text(
+                      user?.nome ?? 'Pato Amigável',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      user?.email ?? 'pato.amigavel@email.com',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: primaryColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.calendar_month_outlined, color: primaryColor, size: 16),
+                          const SizedBox(width: 8),
+                          Text(
+                            user?.createdAt != null 
+                                ? 'Membro desde ${DateFormat('MMM/yyyy', 'pt_BR').format(user!.createdAt!)}'
+                                : 'Membro desde ${DateFormat('MMM/yyyy', 'pt_BR').format(DateTime.now())}',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: primaryColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildProfileMenuItem(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    final theme = Theme.of(context);
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, color: theme.colorScheme.primary),
-      title: Text(
-        title,
-        style: theme.textTheme.bodyMedium?.copyWith(
-          fontWeight: FontWeight.w500,
-          color: theme.colorScheme.onSurface,
-        ),
-      ),
-      trailing: Icon(Icons.chevron_right, color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
-      onTap: onTap,
     );
   }
 }
