@@ -47,7 +47,7 @@ O projeto segue uma arquitetura modular com separação entre interface, lógica
 Clone o repositório:
 
 ```bash
-git clone https://github.com/SEU-USUARIO/pato.git
+git clone https://github.com/Beatrizi-se/pato
 ```
 
 Acesse a pasta do projeto:
